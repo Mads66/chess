@@ -1,2 +1,3 @@
 # chess
-CS240 chess game
+CS240 chess game repository
+Fall 2024
