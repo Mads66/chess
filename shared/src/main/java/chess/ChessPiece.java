@@ -64,6 +64,7 @@ public class ChessPiece {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> moves = new ArrayList<>();
         if (type == PieceType.BISHOP) moves = bishopMoves(board, myPosition);
+        if (type == PieceType.KING) moves = kingMoves(board, myPosition);
         return moves;
     }
 
@@ -102,6 +103,28 @@ public class ChessPiece {
 
     private boolean isValidPosition(int row, int col) {
         return row >= 1 && row <= 8 && col >= 1 && col <= 8;
+    }
+    private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition) {
+        List<ChessMove> moves = new ArrayList<>();
+        int row = myPosition.getRow();
+        int col = myPosition.getColumn();
+        int[] rowDirections = {-1,-1,-1,0,0,1,1,1}; //down, down-right, down-left, left, right, up, up-right, up-left
+        int[] colDirections = {0,1,-1,1,-1,0,1,-1};
+
+        for (int i = 0; i < rowDirections.length; i++){
+            int rowIncrement = rowDirections[i];
+            int colIncrement = colDirections[i];
+
+            ChessPosition position = new ChessPosition(row+rowIncrement, col+colIncrement);
+            if (isValidPosition(row+rowIncrement, col+colIncrement)) {
+                if (board.getPiece(position) == null) {
+                    moves.add(new ChessMove(myPosition, position, null));
+                } else if (board.getPiece(position).getTeamColor() != pieceColor) {
+                    moves.add(new ChessMove(myPosition, position, null));
+                }
+            }
+        }
+        return moves;
     }
 
 }
