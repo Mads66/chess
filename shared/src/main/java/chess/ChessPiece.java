@@ -110,8 +110,8 @@ public class ChessPiece {
         List<ChessMove> moves = new ArrayList<>();
         int row = myPosition.getRow();
         int col = myPosition.getColumn();
-        int[] rowDirections = {-1,-1,-1,0,0,1,1,1}; //down, down-right, down-left, left, right, up, up-right, up-left
-        int[] colDirections = {0,1,-1,1,-1,0,1,-1};
+        int[] rowDirections = {-1,-1,-1,0,0,1,1,1}; //down, down-right, down-left, right, left, up, up-right, up-left
+        int[] colDirections = {0,1,-1,1,-1,0,1,-1}; //
 
         for (int i = 0; i < rowDirections.length; i++){
             int rowIncrement = rowDirections[i];
