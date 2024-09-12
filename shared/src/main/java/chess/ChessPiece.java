@@ -1,6 +1,8 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Represents a single chess piece
@@ -10,7 +12,12 @@ import java.util.Collection;
  */
 public class ChessPiece {
 
+    private final ChessGame.TeamColor pieceColor;
+    private final PieceType type;
+
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
+        this.pieceColor = pieceColor;
+        this.type = type;
     }
 
     /**
@@ -29,14 +36,22 @@ public class ChessPiece {
      * @return Which team this chess piece belongs to
      */
     public ChessGame.TeamColor getTeamColor() {
-        throw new RuntimeException("Not implemented");
+        return pieceColor;
     }
 
     /**
      * @return which type of chess piece this piece is
      */
     public PieceType getPieceType() {
-        throw new RuntimeException("Not implemented");
+        return type;
+    }
+
+    @Override
+    public String toString() {
+        return "ChessPiece{" +
+                "pieceColor=" + pieceColor +
+                ", type=" + type +
+                '}';
     }
 
     /**
@@ -47,6 +62,47 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        Collection<ChessMove> moves = new ArrayList<>();
+        if (type == PieceType.BISHOP) moves = bishopMoves(board, myPosition);
+        return moves;
     }
+
+    private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition) {
+        List<ChessMove> moves = new ArrayList<>();
+        int[] rowDirections = {1, -1, -1, 1};
+        int[] colDirections = {1, 1, -1, -1};
+
+        for (int i = 0; i < rowDirections.length; i++) {
+            int rowIncrement = rowDirections[i];
+            int colIncrement = colDirections[i];
+            int row = myPosition.getRow();
+            int col = myPosition.getColumn();
+
+            while (true) {
+                row += rowIncrement;
+                col += colIncrement;
+
+                if (isValidPosition(row, col)) {
+                    ChessPosition position = new ChessPosition(row, col);
+                    if (board.getPiece(position) == null) {
+                        moves.add(new ChessMove(myPosition, position, null));
+                    } else if (board.getPiece(position).getTeamColor() != pieceColor) {
+                        moves.add(new ChessMove(myPosition, position, null));
+                        break;
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+        return moves;
+    }
+
+    private boolean isValidPosition(int row, int col) {
+        return row >= 1 && row <= 8 && col >= 1 && col <= 8;
+    }
+
 }
+
