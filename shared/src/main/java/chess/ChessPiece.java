@@ -146,11 +146,11 @@ public class ChessPiece {
             int row = myPosition.getRow() + rowIncrement;
             int col = myPosition.getColumn() + colIncrement;
 
-
-            ChessPosition position = new ChessPosition(row+rowIncrement, col+colIncrement);
+            ChessPosition position = new ChessPosition(row, col);
             List<ChessMove> tempMoves = (List<ChessMove>) assembleChessMoves(board,myPosition,position,row,col);
             moves.addAll(tempMoves);
             }
+
         return moves;
     }
 
