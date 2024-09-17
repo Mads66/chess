@@ -11,19 +11,6 @@ import java.util.Objects;
  */
 public class ChessBoard {
     private ChessPiece[][] squares = new ChessPiece[9][9];
-    public ChessBoard() {
-        
-    }
-
-    /**
-     * Adds a chess piece to the chessboard
-     *
-     * @param position where to add the piece to
-     * @param piece    the piece to add
-     */
-    public void addPiece(ChessPosition position, ChessPiece piece) {
-        squares[position.getRow()][position.getColumn()] = piece;
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -36,6 +23,20 @@ public class ChessBoard {
     @Override
     public int hashCode() {
         return Arrays.deepHashCode(squares);
+    }
+
+    public ChessBoard() {
+        
+    }
+
+    /**
+     * Adds a chess piece to the chessboard
+     *
+     * @param position where to add the piece to
+     * @param piece    the piece to add
+     */
+    public void addPiece(ChessPosition position, ChessPiece piece) {
+        squares[position.getRow()][position.getColumn()] = piece;
     }
 
     /**
@@ -54,30 +55,29 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        setupRow(1, ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
-        setupRow(6, ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
+        setupRow(2, ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
+        setupRow(7, ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
 
-        setupRow(0, ChessGame.TeamColor.WHITE, new ChessPiece.PieceType[]{
+        setupRow(1, ChessGame.TeamColor.WHITE, new ChessPiece.PieceType[]{
             ChessPiece.PieceType.ROOK, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.BISHOP,
                     ChessPiece.PieceType.QUEEN, ChessPiece.PieceType.KING, ChessPiece.PieceType.BISHOP, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.ROOK
         });
 
-        setupRow(7, ChessGame.TeamColor.BLACK, new ChessPiece.PieceType[]{
+        setupRow(8, ChessGame.TeamColor.BLACK, new ChessPiece.PieceType[]{
                 ChessPiece.PieceType.ROOK, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.BISHOP,
                 ChessPiece.PieceType.QUEEN, ChessPiece.PieceType.KING, ChessPiece.PieceType.BISHOP, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.ROOK
         });
-
     }
 
     private void setupRow (int row, ChessGame.TeamColor color, ChessPiece.PieceType piece) {
         for (int col = 0; col < 8; col++) {
-            squares[row][col] = new ChessPiece(color, piece);
+            squares[row][col+1] = new ChessPiece(color, piece);
         }
     }
 
     private void setupRow (int row, ChessGame.TeamColor color, ChessPiece.PieceType[] piece) {
         for (int col = 0; col < 8; col++) {
-            squares[row][col] = new ChessPiece(color, piece[col]);
+            squares[row][col+1] = new ChessPiece(color, piece[col]);
         }
     }
 }
