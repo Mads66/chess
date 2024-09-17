@@ -68,6 +68,7 @@ public class ChessPiece {
         if (type == PieceType.KNIGHT) moves = knightMoves(board, myPosition);
         if (type == PieceType.PAWN) moves = pawnMoves(board, myPosition);
         if (type == PieceType.ROOK) moves = rookMoves(board, myPosition);
+        if (type == PieceType.QUEEN) moves = queenMoves(board, myPosition);
         return moves;
     }
 
@@ -241,6 +242,15 @@ public class ChessPiece {
                 }
             }
         }
+        return moves;
+    }
+
+    private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition) {
+        List<ChessMove> moves = new ArrayList<>();
+        List<ChessMove> tempRook = (List<ChessMove>) rookMoves(board, myPosition);
+        moves.addAll(tempRook);
+        List<ChessMove> tempBishop = (List<ChessMove>) bishopMoves(board, myPosition);
+        moves.addAll(tempBishop);
         return moves;
     }
 }
