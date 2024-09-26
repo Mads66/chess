@@ -10,7 +10,7 @@ import java.util.Collection;
  * signature of the existing methods.
  */
 public class ChessGame {
-
+    private ChessBoard myBoard = new ChessBoard(ChessPiece[9][9]);
     public ChessGame() {
 
     }
@@ -108,7 +108,7 @@ public class ChessGame {
             for (int col = 1; col < 9; col++) {
                 ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(position);
-                board.addPiece(position, piece);
+                myBoard.addPiece(position, piece);
             }
         }
     }
@@ -119,6 +119,6 @@ public class ChessGame {
      * @return the chessboard
      */
     public ChessBoard getBoard() {
-
+        return myBoard;
     }
 }
