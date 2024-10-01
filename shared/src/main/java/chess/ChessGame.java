@@ -11,6 +11,7 @@ import java.util.Collection;
  */
 public class ChessGame {
     private ChessBoard myBoard = new ChessBoard();
+    private TeamColor teamTurn;
     public ChessGame() {
 
     }
@@ -19,7 +20,7 @@ public class ChessGame {
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-        throw new RuntimeException("Not implemented");
+        return teamTurn;
     }
 
     /**
@@ -28,7 +29,7 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
-        throw new RuntimeException("Not implemented");
+        teamTurn = team;
     }
 
     /**
@@ -50,6 +51,9 @@ public class ChessGame {
         Collection<ChessMove> validMoves = new ArrayList<>();
         ChessBoard board = getBoard();
         ChessPiece piece = board.getPiece(startPosition);
+        if (isInCheck(teamTurn) && piece.getPieceType() != ChessPiece.PieceType.KING){
+            return null;
+        }
         validMoves = piece.pieceMoves(board, startPosition);
         if (validMoves.isEmpty()) {
             return null;
@@ -74,7 +78,31 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        ChessPosition king = null;
+        for (int row = 1; row < 9; row++) {
+            for (int col = 1; col < 9; col++) {
+                ChessPiece piece = myBoard.getPiece(new ChessPosition(row, col));
+                if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+                    king = new ChessPosition(row, col);
+                }
+            }
+        }
+
+        for (int row = 1; row < 9; row++) {
+            for (int col = 1; col < 9; col++) {
+                ChessPiece piece = myBoard.getPiece(new ChessPosition(row, col));
+                if ((piece.getPieceType() != null) && (teamColor != piece.getTeamColor())) {
+                    ChessPosition opponentPosition = new ChessPosition(row, col);
+                    Collection<ChessMove> moves = validMoves(opponentPosition);
+                    for (ChessMove move : moves) {
+                        if (move.getEndPosition() == king) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
