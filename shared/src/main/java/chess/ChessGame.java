@@ -51,37 +51,42 @@ public class ChessGame {
         Collection<ChessMove> validMoves = new ArrayList<>();
         ChessBoard board = getBoard();
         ChessPiece piece = board.getPiece(startPosition);
+        setTeamTurn(piece.getTeamColor());
         if (isInCheck(teamTurn)){
             validMoves = checkMoves(startPosition, teamTurn, board);
         }
-        else {validMoves = piece.pieceMoves(board, startPosition);}
-        if (validMoves.isEmpty()) {
-            return null;
+        else {
+            Collection<ChessMove> tempMoves = piece.pieceMoves(board, startPosition);
+            for (move: tempMoves){
+                makeMove(move);
+                if (!isInCheck(teamTurn)){
+                    validMoves.add(move);
+                }
+            }
         }
+        setBoard(board);
         return validMoves;
     }
 
     private Collection<ChessMove> checkMoves(ChessPosition startPosition, TeamColor teamColor, ChessBoard board) {
         Collection<ChessMove> validMoves = new ArrayList<>();
-        ChessPosition king = kingPosition(teamColor,board);
-        Collection<ChessMove> opponentMoves = checkOpponentMove(teamColor, king, board);
         ChessPiece piece = board.getPiece(startPosition);
         Collection<ChessMove> tempMoves = piece.pieceMoves(board, startPosition);
 
         for (ChessMove move : tempMoves) {
-            ChessBoard simulatedBoard = copyBoard(board);
             try {
-                testMove(move, simulatedBoard);
+                makeMove(move);
             } catch (InvalidMoveException e){
                 break;
             }
 
-            ChessPosition simKing = kingPosition(teamColor, simulatedBoard);
-            Collection<ChessMove> simOpponentMoves = checkOpponentMove(teamColor, simKing, board);
+            ChessPosition simKing = kingPosition(teamColor, myBoard);
+            Collection<ChessMove> simOpponentMoves = checkOpponentMove(teamColor, simKing, myBoard);
             if (!simOpponentMoves.isEmpty()){
                 validMoves.add(move);
             }
         }
+        setBoard(board);
         return validMoves;
     }
 
@@ -93,17 +98,15 @@ public class ChessGame {
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessBoard board = getBoard();
-        testMove(move,board);
-    }
-
-    private void testMove(ChessMove move, ChessBoard board) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition());
         if (move.getPromotionPiece() != null) {
             board.addPiece(move.getEndPosition(), new ChessPiece(teamTurn, move.getPromotionPiece()));
         }
         else {board.addPiece(move.getEndPosition(), piece);}
         board.addPiece(move.getStartPosition(), null);
+        setBoard(board);
     }
+
 
     /**
      * Determines if the given team is in check
@@ -144,7 +147,8 @@ public class ChessGame {
                     if (teamColor != piece.getTeamColor()) {
                         Collection<ChessMove> moves = piece.pieceMoves(board, opponentPosition);
                         for (ChessMove move : moves) {
-                            if (move.getEndPosition() == king) {
+                            ChessPosition opponent = move.getEndPosition();
+                            if (opponent == king) {
                                 opponentMoves.add((ChessMove) moves);
                                 break;
                             }
