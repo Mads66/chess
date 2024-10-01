@@ -70,7 +70,11 @@ public class ChessGame {
 
         for (ChessMove move : tempMoves) {
             ChessBoard simulatedBoard = copyBoard(board);
-            simulatedBoard.makeMove(move);
+            try {
+                testMove(move, simulatedBoard);
+            } catch (InvalidMoveException e){
+                break;
+            }
 
             ChessPosition simKing = kingPosition(teamColor, simulatedBoard);
             Collection<ChessMove> simOpponentMoves = checkOpponentMove(teamColor, simKing, board);
@@ -89,13 +93,16 @@ public class ChessGame {
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessBoard board = getBoard();
+        testMove(move,board);
+    }
+
+    private void testMove(ChessMove move, ChessBoard board) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition());
         if (move.getPromotionPiece() != null) {
             board.addPiece(move.getEndPosition(), new ChessPiece(teamTurn, move.getPromotionPiece()));
         }
         else {board.addPiece(move.getEndPosition(), piece);}
         board.addPiece(move.getStartPosition(), null);
-        setBoard(board);
     }
 
     /**
