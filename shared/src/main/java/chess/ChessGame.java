@@ -57,8 +57,9 @@ public class ChessGame {
         }
         else {
             Collection<ChessMove> tempMoves = piece.pieceMoves(board, startPosition);
-            for (move: tempMoves){
-                makeMove(move);
+            for (ChessMove move: tempMoves){
+                try{makeMove(move);}
+                catch(InvalidMoveException e){continue;}
                 if (!isInCheck(teamTurn)){
                     validMoves.add(move);
                 }
