@@ -67,7 +67,7 @@ public class ChessGame {
         ChessBoard originalBoard = copyBoard(board);
         for (ChessMove move : tempMoves) {
             try {
-                makeMove(move);
+                moving(move);
             } catch (InvalidMoveException e){
                 continue;
             }
@@ -87,8 +87,21 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
+        ChessPiece piece = myBoard.getPiece(move.getStartPosition());
+        if (piece == null) {throw new InvalidMoveException("No piece here");}
+        //if (piece.getTeamColor() != teamTurn) {throw new InvalidMoveException("Not your turn");}
+        Collection<ChessMove> validMoves = validMoves(move.getStartPosition());
+        if (!validMoves.contains(move)){throw new InvalidMoveException("Invalid move");}
+        moving(move);
+    }
+
+    private void moving(ChessMove move) throws InvalidMoveException {
         ChessBoard board = getBoard();
         ChessPiece piece = board.getPiece(move.getStartPosition());
+        ChessPosition endPosition = move.getEndPosition();
+        if (endPosition.getRow() > 8 || endPosition.getRow() < 1 || endPosition.getColumn() > 8 || endPosition.getColumn() < 1){
+            throw new InvalidMoveException("Invalid move");
+        }
         if (move.getPromotionPiece() != null) {
             board.addPiece(move.getEndPosition(), new ChessPiece(teamTurn, move.getPromotionPiece()));
         }
