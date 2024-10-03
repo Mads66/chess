@@ -52,10 +52,7 @@ public class ChessGame {
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         Collection<ChessMove> validMoves = new ArrayList<>();
         ChessBoard board = getBoard();
-        ChessPiece piece = board.getPiece(startPosition);
-        setTeamTurn(piece.getTeamColor());
         validMoves = checkMoves(startPosition, teamTurn, board);
-        setBoard(board);
         return validMoves;
     }
 
@@ -67,7 +64,7 @@ public class ChessGame {
         ChessBoard originalBoard = copyBoard(board);
         for (ChessMove move : tempMoves) {
             try {
-                moving(move);
+                moving(move, piece);
             } catch (InvalidMoveException e){
                 continue;
             }
@@ -89,23 +86,22 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = myBoard.getPiece(move.getStartPosition());
         if (piece == null) {throw new InvalidMoveException("No piece here");}
-        //if (piece.getTeamColor() != teamTurn) {throw new InvalidMoveException("Not your turn");}
         Collection<ChessMove> validMoves = validMoves(move.getStartPosition());
-        if (!validMoves.contains(move)){throw new InvalidMoveException("Invalid move");}
-        moving(move);
+        if (!validMoves.contains(move)){throw new InvalidMoveException("Invalid move: not a piece move");}
+        moving(move, piece);
     }
 
-    private void moving(ChessMove move) throws InvalidMoveException {
+    private void moving(ChessMove move, ChessPiece piece) throws InvalidMoveException {
         ChessBoard board = getBoard();
-        ChessPiece piece = board.getPiece(move.getStartPosition());
+        if (piece.getTeamColor() != teamTurn) {throw new InvalidMoveException("Not your turn");}
         ChessPosition endPosition = move.getEndPosition();
         if (endPosition.getRow() > 8 || endPosition.getRow() < 1 || endPosition.getColumn() > 8 || endPosition.getColumn() < 1){
-            throw new InvalidMoveException("Invalid move");
+            throw new InvalidMoveException("Invalid move: out of bounds");
         }
         if (move.getPromotionPiece() != null) {
-            board.addPiece(move.getEndPosition(), new ChessPiece(teamTurn, move.getPromotionPiece()));
+            board.addPiece(endPosition, new ChessPiece(teamTurn, move.getPromotionPiece()));
         }
-        else {board.addPiece(move.getEndPosition(), piece);}
+        else {board.addPiece(endPosition, piece);}
         board.addPiece(move.getStartPosition(), null);
         setBoard(board);
     }
