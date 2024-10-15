@@ -1,8 +1,13 @@
 package server;
 
+import com.google.gson.Gson;
+import model.*;
 import spark.*;
+import service.Service;
 
 public class Server {
+
+    private Service s = new Service();
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
@@ -21,8 +26,13 @@ public class Server {
     }
 
     private String createUser(Request req, Response res) {
-        return """
-                [200] { "username":"", "authToken":"" }""";
+        var g = new Gson();
+        var newUser = g.fromJson(
+                """
+                        { "username":"", "authToken":"" }""", UserData.class);
+        var x = s.registerUser(newUser);
+
+        return Gson.toJson(x);
     }
 
     public void stop() {
