@@ -6,15 +6,15 @@ import model.AuthData;
 import model.UserData;
 
 public class UserService {
+    private final MemoryUserDAO userAccess = new MemoryUserDAO();
+    private final MemoryAuthDAO authAccess = new MemoryAuthDAO();
 
     public AuthData registerUser(UserData user) throws Exception {
-        var userAccess = new MemoryUserDAO();
-        var authAcesss = new MemoryAuthDAO();
         if (userAccess.getUser(user) != null) {
             throw new ServiceException("Error: already taken");
         } else {
             userAccess.createUser(user);
-            return authAcesss.createAuth(user);
+            return authAccess.createAuth(user);
         }
     }
 
@@ -29,7 +29,6 @@ public class UserService {
     }
 
     public AuthData getAuth(AuthData auth) throws Exception {
-        var authAccess = new MemoryAuthDAO();
         return authAccess.getAuth(auth);
     }
 }
