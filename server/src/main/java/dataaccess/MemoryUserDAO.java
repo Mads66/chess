@@ -15,6 +15,13 @@ public class MemoryUserDAO implements UserDAO {
 
     @Override
     public UserData getUser(UserData user) throws DataAccessException {
-        return users.get(user.username());
+        var thisUser = users.get(user.username());
+        if (thisUser == null) {
+            return thisUser;
+        } else if (!thisUser.password().equals(user.password())) {
+            throw new DataAccessException("Error: unauthorized");
+        } else {
+            return thisUser;
+        }
     }
 }
