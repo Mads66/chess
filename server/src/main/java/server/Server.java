@@ -1,14 +1,15 @@
 package server;
 
 import com.google.gson.Gson;
+import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryUserDAO;
 import model.*;
 import spark.*;
-import service.Service;
+import service.UserService;
 
 public class Server {
 
-    private Service s = new Service();
+    private UserService userService = new UserService();
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
@@ -16,7 +17,7 @@ public class Server {
         Spark.staticFiles.location("web");
 
         // Register your endpoints and handle exceptions here.
-        Spark.post("/user", this::createUser);
+        Spark.post("/user", this::registerUser);
 
 
         //This line initializes the server and can be removed once you have a functioning endpoint 
@@ -26,12 +27,12 @@ public class Server {
         return Spark.port();
     }
 
-    private String createUser(Request req, Response res) throws Exception {
+    private String registerUser(Request req, Response res) throws Exception {
         var user = new Gson().fromJson(req.body(), UserData.class);
-        user = s.registerUser(user);
-        var dataAccess = new MemoryUserDAO();
-        user = dataAccess.getUser(user);
-        return new Gson().toJson(user);
+        var result = userService.registerUser(user);
+        var dataAccess = new MemoryAuthDAO();
+        var response = dataAccess.getAuth(result);
+        return new Gson().toJson(response);
     }
 
     public void stop() {
