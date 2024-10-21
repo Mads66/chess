@@ -2,22 +2,9 @@ package dataaccess;
 
 import model.UserData;
 
-private interface User {
-    int createUser(UserData user);
+public interface UserDAO {
+    UserData createUser(UserData user) throws DataAccessException;
 
-    int getUser(UserData user);
+    UserData getUser(UserData user) throws DataAccessException;
 
-}
-
-public class UserDAO implements User {
-
-    @Override
-    public int createUser(UserData user) {
-        return 0;
-    }
-
-    @Override
-    public int getUser(UserData user) {
-        return 0;
-    }
 }

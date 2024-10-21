@@ -3,34 +3,15 @@ package dataaccess;
 import model.AuthData;
 import model.GameData;
 
-private interface Game {
-    int createGame(GameData game);
+import java.util.Collection;
 
-    int getGame(GameData game, AuthData auth);
+public interface GameDAO {
+    GameData createGame(GameData game);
 
-    int listGames(AuthData auth);
+    GameData getGame(GameData game, AuthData auth);
 
-    int updateGame(GameData game, AuthData auth);
+    Collection<GameData> listGames(AuthData auth);
+
+    GameData updateGame(GameData game, AuthData auth);
 }
 
-public class GameDAO implements Game {
-    @Override
-    public int createGame(GameData game) {
-        return 0;
-    }
-
-    @Override
-    public int getGame(GameData game, AuthData auth) {
-        return 0;
-    }
-
-    @Override
-    public int listGames(AuthData auth) {
-        return 0;
-    }
-
-    @Override
-    public int updateGame(GameData game, AuthData auth) {
-        return 0;
-    }
-}

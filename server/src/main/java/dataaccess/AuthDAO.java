@@ -3,28 +3,11 @@ package dataaccess;
 import model.AuthData;
 import model.UserData;
 
-private interface Auth {
-    int createAuth();
+public interface AuthDAO {
+    AuthData createAuth() throws DataAccessException;
 
-    int getAuth(UserData user);
+    AuthData getAuth(UserData user) throws DataAccessException;
 
-    int deleteAuth(AuthData auth);
+    AuthData deleteAuth(AuthData auth) throws DataAccessException;
 }
 
-public class AuthDAO implements Auth {
-
-    @Override
-    public int createAuth() {
-        return 0;
-    }
-
-    @Override
-    public int getAuth(UserData user) {
-        return 0;
-    }
-
-    @Override
-    public int deleteAuth(AuthData auth) {
-        return 0;
-    }
-}
