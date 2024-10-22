@@ -7,7 +7,7 @@ import model.GameData;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Objects;
 
 public class MemoryGameDAO implements GameDAO {
     private int gameID = 1;
@@ -41,8 +41,26 @@ public class MemoryGameDAO implements GameDAO {
     }
 
     @Override
-    public GameData updateGame(int gameID, AuthData auth) {
+    public GameData joinGame(AuthData auth, String playerColor, int gameID) throws Exception {
         var games = UsersGames.get(auth.authToken());
-        return null;
+        if (games != null) {
+            for (GameData game : games) {
+                if (game.gameId() == gameID) {
+                    if (Objects.equals(playerColor, "BLACK") && game.blackUsername() == null) {
+                        var newGame = new GameData(gameID, game.whiteUsername(), auth.username(), game.gameName(), game.game());
+                        games.remove(game);
+                        games.add(newGame);
+                        return newGame;
+                    } else if (Objects.equals(playerColor, "WHITE") && game.whiteUsername() == null) {
+                        var newGame = new GameData(gameID, auth.username(), game.blackUsername(), game.gameName(), game.game());
+                        games.remove(game);
+                        games.add(newGame);
+                        return newGame;
+                    } else {
+                        throw new DataAccessException("Error: already taken");
+                    }
+                }
+            }
+        }
     }
 }

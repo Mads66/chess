@@ -31,4 +31,17 @@ public class GameService {
             return gameAccess.createGame(gameName, auth);
         }
     }
+
+    public void joinGame(AuthData auth, String playerColor, int GameId, UserService service) throws Exception {
+        var authCheck = service.getAuth(auth);
+        if (authCheck == null) {
+            throw new ServiceException("Error: unauthorized");
+        } else if (GameId <= 0) {
+            throw new ServiceException("Error: bad request");
+        } else if (playerColor != "BLACK" || playerColor != "WHITE") {
+            throw new ServiceException("Error: bad request");
+        } else {
+            gameAccess.joinGame(auth, playerColor, GameId);
+        }
+    }
 }
