@@ -6,7 +6,7 @@ import model.GameData;
 import java.util.Collection;
 
 public interface GameDAO {
-    GameData createGame(GameData game);
+    GameData createGame(String gameName, AuthData auth);
 
     GameData getGame(GameData game, AuthData auth);
 

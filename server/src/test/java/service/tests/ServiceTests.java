@@ -3,6 +3,7 @@ package service.tests;
 import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.Test;
+import service.GameService;
 import service.ServiceException;
 import service.UserService;
 
@@ -66,4 +67,17 @@ public class ServiceTests {
         var badAuth = new AuthData("blahblahblah", "username");
         assertThrows(ServiceException.class, () -> service.logoutUser(badAuth));
     }
+
+    @Test
+    public void createGame() throws Exception {
+        var game = new GameService();
+        var user = new UserService();
+        var gameUser = new UserData("username", "password", "email@email.com");
+        var registered = user.registerUser(gameUser);
+        var returned = game.createGame("AwesomeGame", registered, user);
+        assertEquals("AwesomeGame", returned.gameName());
+    }
+
+    @Test
+    public void
 }
