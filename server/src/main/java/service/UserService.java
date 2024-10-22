@@ -40,4 +40,9 @@ public class UserService {
     public AuthData getAuth(AuthData auth) throws Exception {
         return authAccess.getAuth(auth);
     }
+
+    public void clear() {
+        authAccess.clear();
+        userAccess.clear();
+    }
 }

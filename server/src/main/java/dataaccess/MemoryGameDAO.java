@@ -64,4 +64,8 @@ public class MemoryGameDAO implements GameDAO {
         }
         return null;
     }
+
+    public void clear() {
+        UsersGames.clear();
+    }
 }

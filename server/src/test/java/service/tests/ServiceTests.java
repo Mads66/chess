@@ -148,4 +148,24 @@ public class ServiceTests {
         assertThrows(ServiceException.class, () -> service.joinGame(registered, "BLUE", 1, userS));
         assertThrows(ServiceException.class, () -> service.joinGame(badAuth, "BLACK", 2, userS));
     }
+
+    @Test
+    public void clearDatabase() throws Exception {
+        var service = new GameService();
+        var userS = new UserService();
+        var user = new UserData("username", "password", "email@email.com");
+        var user2 = new UserData("username2", "password2", "email2@email.com");
+        var user3 = new UserData("username3", "password3", "email3@email.com");
+        var one = userS.registerUser(user);
+        var two = userS.registerUser(user2);
+        var three = userS.registerUser(user3);
+        service.createGame("HOOTS", one, userS);
+        service.createGame("HOOTS2", two, userS);
+        service.createGame("HOOTS3", three, userS);
+        service.clear();
+        userS.clear();
+        assertThrows(ServiceException.class, () -> service.joinGame(one, "BLACK", 1, userS));
+        assertThrows(ServiceException.class, () -> userS.loginUser(user2));
+        assertThrows(ServiceException.class, () -> service.listGames(three, userS));
+    }
 }

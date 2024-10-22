@@ -44,4 +44,9 @@ public class GameService {
             throw new ServiceException("Error: bad request");
         }
     }
+
+    public void clear() {
+        gameAccess.clear();
+    }
+
 }
