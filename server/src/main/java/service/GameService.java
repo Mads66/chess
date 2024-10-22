@@ -3,6 +3,7 @@ package service;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
+import exception.ResponseException;
 import model.AuthData;
 import model.GameData;
 
@@ -14,7 +15,7 @@ public class GameService {
     public Collection<GameData> listGames(AuthData auth, UserService userService) throws Exception {
         var authCheck = userService.getAuth(auth);
         if (authCheck == null) {
-            throw new ServiceException("Error: unauthorized");
+            throw new ResponseException(401, "Error: unauthorized");
         } else {
             return gameAccess.listGames(auth);
         }
@@ -23,10 +24,10 @@ public class GameService {
     public GameData createGame(String gameName, AuthData auth, UserService service) throws Exception {
         var authCheck = service.getAuth(auth);
         if (authCheck == null) {
-            throw new ServiceException("Error: unauthorized");
+            throw new ResponseException(401, "Error: unauthorized");
         }
         if (gameName == null) {
-            throw new ServiceException("Error: bad request");
+            throw new ResponseException(400, "Error: bad request");
         } else {
             return gameAccess.createGame(gameName, auth);
         }
@@ -35,13 +36,13 @@ public class GameService {
     public GameData joinGame(AuthData auth, String playerColor, int GameId, UserService service) throws Exception {
         var authCheck = service.getAuth(auth);
         if (authCheck == null) {
-            throw new ServiceException("Error: unauthorized");
+            throw new ResponseException(401, "Error: unauthorized");
         } else if (GameId <= 0) {
-            throw new ServiceException("Error: bad request");
+            throw new ResponseException(400, "Error: bad request");
         } else if (playerColor.equals("BLACK") || playerColor.equals("WHITE")) {
             return gameAccess.joinGame(auth, playerColor, GameId);
         } else {
-            throw new ServiceException("Error: bad request");
+            throw new ResponseException(400, "Error: bad request");
         }
     }
 

@@ -1,6 +1,7 @@
 package dataaccess;
 
 import chess.ChessGame;
+import exception.ResponseException;
 import model.AuthData;
 import model.GameData;
 
@@ -57,7 +58,7 @@ public class MemoryGameDAO implements GameDAO {
                         games.add(newGame);
                         return newGame;
                     } else {
-                        throw new DataAccessException("Error: already taken");
+                        throw new ResponseException(403, "Error: already taken");
                     }
                 }
             }

@@ -2,6 +2,7 @@ package service;
 
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryUserDAO;
+import exception.ResponseException;
 import model.AuthData;
 import model.UserData;
 
@@ -11,10 +12,10 @@ public class UserService {
 
     public AuthData registerUser(UserData user) throws Exception {
         if (user.password() == null || user.email() == null) {
-            throw new ServiceException("Error: bad request");
+            throw new ResponseException(400, "Error: bad request");
         }
         if (userAccess.getUser(user) != null) {
-            throw new ServiceException("Error: already taken");
+            throw new ResponseException(403, "Error: already taken");
         } else {
             userAccess.createUser(user);
             return authAccess.createAuth(user);
@@ -23,7 +24,7 @@ public class UserService {
 
     public AuthData loginUser(UserData user) throws Exception {
         if (userAccess.getUser(user) == null) {
-            throw new ServiceException("Error: unauthorized");
+            throw new ResponseException(401, "Error: unauthorized");
         } else {
             return authAccess.createAuth(user);
         }
@@ -31,7 +32,7 @@ public class UserService {
 
     public void logoutUser(AuthData auth) throws Exception {
         if (authAccess.getAuth(auth) == null) {
-            throw new ServiceException("Error: unauthorized");
+            throw new ResponseException(401, "Error: unauthorized");
         } else {
             authAccess.deleteAuth(auth);
         }
