@@ -15,7 +15,7 @@ public class GameService {
         if (authCheck == null) {
             throw new ResponseException(401, "Error: unauthorized");
         } else {
-            return gameAccess.listGames(auth);
+            return gameAccess.listGames(authCheck);
         }
     }
 
@@ -27,18 +27,18 @@ public class GameService {
         if (gameName == null) {
             throw new ResponseException(400, "Error: bad request");
         } else {
-            return gameAccess.createGame(gameName, auth);
+            return gameAccess.createGame(gameName, authCheck);
         }
     }
 
-    public GameData joinGame(AuthData auth, String playerColor, int GameId, UserService service) throws Exception {
+    public void joinGame(AuthData auth, String playerColor, int GameId, UserService service) throws Exception {
         var authCheck = service.getAuth(auth);
         if (authCheck == null) {
             throw new ResponseException(401, "Error: unauthorized");
         } else if (GameId <= 0) {
             throw new ResponseException(400, "Error: bad request");
-        } else if (playerColor.equals("BLACK") || playerColor.equals("WHITE")) {
-            return gameAccess.joinGame(auth, playerColor, GameId);
+        } else if (playerColor != null && (playerColor.equals("BLACK") || playerColor.equals("WHITE"))) {
+            gameAccess.joinGame(authCheck, playerColor, GameId);
         } else {
             throw new ResponseException(400, "Error: bad request");
         }

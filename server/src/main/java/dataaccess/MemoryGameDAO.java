@@ -5,68 +5,62 @@ import exception.ResponseException;
 import model.AuthData;
 import model.GameData;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
 
 public class MemoryGameDAO implements GameDAO {
-    private int gameID = 1;
-    final private HashMap<String, Collection<GameData>> UsersGames = new HashMap<>();
+    private int gameID = 1234;
+    final private HashMap<Integer, GameData> allGames = new HashMap<>();
+    final private Collection<GameData> games = new ArrayList<>();
 
     @Override
     public GameData createGame(String gameName, AuthData auth) {
         var game = new GameData(gameID++, null, null, gameName, new ChessGame());
-        Collection<GameData> gameList = new ArrayList<>();
-        gameList.add(game);
-        if (UsersGames.containsKey(auth.authToken())) {
-            UsersGames.get(auth.authToken()).add(game);
-        } else {
-            UsersGames.put(auth.authToken(), gameList);
-        }
+        allGames.put(game.gameId(), game);
+        games.add(game);
         return game;
     }
 
     @Override
-    public GameData getGame(GameData game, AuthData auth) {
-        var games = UsersGames.get(auth.authToken());
-        if (games != null && games.contains(game)) {
-            return game;
-        }
-        return null;
+    public GameData getGame(int gameID) {
+        return allGames.get(gameID);
     }
 
     @Override
     public Collection<GameData> listGames(AuthData auth) {
-        return UsersGames.get(auth.authToken());
+        return games;
     }
 
     @Override
-    public GameData joinGame(AuthData auth, String playerColor, int gameID) throws Exception {
-        var games = UsersGames.get(auth.authToken());
-        if (games != null) {
-            for (GameData game : games) {
-                if (game.gameId() == gameID) {
-                    if (Objects.equals(playerColor, "BLACK") && game.blackUsername() == null) {
-                        var newGame = new GameData(gameID, game.whiteUsername(), auth.username(), game.gameName(), game.game());
-                        games.remove(game);
-                        games.add(newGame);
-                        return newGame;
-                    } else if (Objects.equals(playerColor, "WHITE") && game.whiteUsername() == null) {
-                        var newGame = new GameData(gameID, auth.username(), game.blackUsername(), game.gameName(), game.game());
-                        games.remove(game);
-                        games.add(newGame);
-                        return newGame;
-                    } else {
-                        throw new ResponseException(403, "Error: already taken");
-                    }
-                }
+    public void joinGame(AuthData auth, String playerColor, int gameID) throws Exception {
+        var game = getGame(gameID);
+        if (game != null) {
+            if (Objects.equals(playerColor, "BLACK") && game.blackUsername() == null) {
+                var newGame = new GameData(gameID, game.whiteUsername(), auth.username(), game.gameName(), game.game());
+                allGames.replace(gameID, newGame);
+                updateGames(newGame);
+            } else if (Objects.equals(playerColor, "WHITE") && game.whiteUsername() == null) {
+                var newGame = new GameData(gameID, auth.username(), game.blackUsername(), game.gameName(), game.game());
+                allGames.replace(gameID, newGame);
+                updateGames(newGame);
+            } else {
+                throw new ResponseException(403, "Error: already taken");
+            }
+        } else {
+            throw new ResponseException(400, "Error: bad request");
+        }
+    }
+
+    private void updateGames(GameData newGame) {
+        for (GameData gameData : games) {
+            if (gameData.gameId() == newGame.gameId()) {
+                games.remove(gameData);
+                games.add(newGame);
             }
         }
-        return null;
     }
 
     public void clear() {
-        UsersGames.clear();
+        allGames.clear();
+        games.clear();
     }
 }

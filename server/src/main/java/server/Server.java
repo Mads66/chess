@@ -7,8 +7,7 @@ import service.GameService;
 import spark.*;
 import service.UserService;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class Server {
 
@@ -52,39 +51,47 @@ public class Server {
 
     private Object joinGame(Request request, Response response) throws Exception {
         AuthData auth = headerHandler(request);
-        Map<String, Object> data = new Gson().fromJson(response.body(), Map.class);
-        String playerColor = (String) data.get("playerColor");
-        int gameID = (int) data.get("gameID");
-        gameService.joinGame(auth, playerColor, gameID, userService);
+        var gameData = new Gson().fromJson(request.body(), JoinGameRequest.class);
+        gameService.joinGame(auth, gameData.playerColor(), gameData.gameID(), userService);
         response.status(200);
-        return "";
+        response.type("application/json");
+        return "{}";
     }
 
     private AuthData headerHandler(Request request) {
-        Set<String> headers = request.headers();
-        String authToken = null;
-        String username = null;
-        for (String header : headers) {
-            if (header.startsWith("Authorization")) {
-                authToken = header;
-            }
-        }
-        return new AuthData(authToken, username);
+        String auth = request.headers("Authorization");
+        return new AuthData(auth, null);
     }
 
     private Object createGame(Request request, Response response) throws Exception {
         AuthData auth = headerHandler(request);
-        var gameName = new Gson().fromJson(request.body().substring(9), String.class);
-        var result = gameService.createGame(gameName, auth, userService);
+        var gameName = new Gson().fromJson(request.body(), CreateGameRequest.class);
+        var result = gameService.createGame(gameName.gameName(), auth, userService);
         response.status(200);
-        return new Gson().toJson(result.gameId());
+        String jsonResponse = String.format("{ \"gameID\":\"%s\" }", result.gameId());
+        response.type("application/json");
+        return jsonResponse;
     }
 
     private Object listGames(Request request, Response response) throws Exception {
         var auth = headerHandler(request);
         var result = gameService.listGames(auth, userService);
         response.status(200);
-        return new Gson().toJson(result);
+        response.type("application/json");
+        return listGameFormatter(result);
+    }
+
+    private Object listGameFormatter(Collection<GameData> gameList) {
+        Collection<ListGameResponse> listGameResponses = new ArrayList<>();
+
+        for (GameData gameData : gameList) {
+            listGameResponses.add(new ListGameResponse(gameData.gameId(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName()));
+        }
+
+        Map<String, Collection<ListGameResponse>> responseMap = new HashMap<>();
+        responseMap.put("games", listGameResponses);
+
+        return new Gson().toJson(responseMap);
     }
 
     private Object logout(Request request, Response response) throws Exception {
@@ -103,6 +110,7 @@ public class Server {
 
     private Object clear(Request request, Response response) {
         userService.clear();
+        gameService.clear();
         response.status(200);
         return "";
     }
