@@ -10,6 +10,9 @@ public class UserService {
     private final MemoryAuthDAO authAccess = new MemoryAuthDAO();
 
     public AuthData registerUser(UserData user) throws Exception {
+        if (user.password() == null || user.email() == null) {
+            throw new ServiceException("Error: bad request");
+        }
         if (userAccess.getUser(user) != null) {
             throw new ServiceException("Error: already taken");
         } else {
@@ -19,12 +22,18 @@ public class UserService {
     }
 
     public AuthData loginUser(UserData user) throws Exception {
-        var userAccess = new MemoryUserDAO();
-        var authAcesss = new MemoryAuthDAO();
         if (userAccess.getUser(user) == null) {
             throw new ServiceException("Error: unauthorized");
         } else {
-            return authAcesss.createAuth(user);
+            return authAccess.createAuth(user);
+        }
+    }
+
+    public void logoutUser(AuthData auth) throws Exception {
+        if (authAccess.getAuth(auth) == null) {
+            throw new ServiceException("Error: unauthorized");
+        } else {
+            authAccess.deleteAuth(auth);
         }
     }
 
