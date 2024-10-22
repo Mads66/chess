@@ -79,5 +79,21 @@ public class ServiceTests {
     }
 
     @Test
-    public void
+    public void createGameUnauthorized() throws Exception {
+        var game = new GameService();
+        var userS = new UserService();
+        var badAuth = new AuthData("Tehe-I-am-not-real", "username_who");
+        assertThrows(ServiceException.class, () -> game.createGame("IamUnauthorized", badAuth, userS));
+    }
+
+    @Test
+    public void createGameBadRequest() throws Exception {
+        var game = new GameService();
+        var userS = new UserService();
+        var user = new UserData("username", "password", "email@email.com");
+        var registered = userS.registerUser(user);
+        assertThrows(ServiceException.class, () -> game.createGame(null, registered, userS));
+    }
+
+
 }
