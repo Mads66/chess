@@ -107,4 +107,14 @@ public class ServiceTests {
         var list = service.listGames(registered, userS);
         assertEquals(3, list.size());
     }
+
+    @Test
+    public void listGamesUnauthorized() throws Exception {
+        var service = new GameService();
+        var userS = new UserService();
+        var unauthorized = new AuthData("who-is-this", "username_who");
+        assertThrows(ServiceException.class, () -> service.listGames(unauthorized, userS));
+    }
+
+
 }
