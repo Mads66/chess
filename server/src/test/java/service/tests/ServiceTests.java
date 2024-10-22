@@ -116,5 +116,36 @@ public class ServiceTests {
         assertThrows(ServiceException.class, () -> service.listGames(unauthorized, userS));
     }
 
+    @Test
+    public void joinGame() throws Exception {
+        var service = new GameService();
+        var userS = new UserService();
+        var user = new UserData("username", "password", "email@email.com");
+        var registered = userS.registerUser(user);
+        service.createGame("AwesomeGame", registered, userS);
+        service.createGame("AwesomeGame2", registered, userS);
+        service.createGame("AwesomeGame3", registered, userS);
+        assertNotNull(service.joinGame(registered, "BLACK", 1, userS));
+    }
 
+    @Test
+    public void joinGameNotFound() throws Exception {
+        var service = new GameService();
+        var userS = new UserService();
+        var user = new UserData("username", "password", "email@email.com");
+        var registered = userS.registerUser(user);
+        assertNull(service.joinGame(registered, "BLACK", 1, userS));
+    }
+
+    @Test
+    public void joinGameBadRequest() throws Exception {
+        var service = new GameService();
+        var userS = new UserService();
+        var user = new UserData("username", "password", "email@email.com");
+        var registered = userS.registerUser(user);
+        var badAuth = new AuthData("BLAH", "HAH");
+        assertThrows(ServiceException.class, () -> service.joinGame(registered, "BLACK", 0, userS));
+        assertThrows(ServiceException.class, () -> service.joinGame(registered, "BLUE", 1, userS));
+        assertThrows(ServiceException.class, () -> service.joinGame(badAuth, "BLACK", 2, userS));
+    }
 }
