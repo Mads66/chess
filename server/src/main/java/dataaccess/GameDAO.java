@@ -12,6 +12,6 @@ public interface GameDAO {
 
     Collection<GameData> listGames(AuthData auth);
 
-    GameData updateGame(GameData game, AuthData auth);
+    GameData updateGame(int gameID, AuthData auth);
 }
 

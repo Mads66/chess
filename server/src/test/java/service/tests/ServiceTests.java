@@ -95,5 +95,16 @@ public class ServiceTests {
         assertThrows(ServiceException.class, () -> game.createGame(null, registered, userS));
     }
 
-
+    @Test
+    public void listGames() throws Exception {
+        var service = new GameService();
+        var userS = new UserService();
+        var user = new UserData("username", "password", "email@email.com");
+        var registered = userS.registerUser(user);
+        service.createGame("AwesomeGame", registered, userS);
+        service.createGame("AwesomeGame2", registered, userS);
+        service.createGame("AwesomeGame3", registered, userS);
+        var list = service.listGames(registered, userS);
+        assertEquals(3, list.size());
+    }
 }

@@ -18,14 +18,18 @@ public class MemoryGameDAO implements GameDAO {
         var game = new GameData(gameID++, null, null, gameName, new ChessGame());
         Collection<GameData> gameList = new ArrayList<>();
         gameList.add(game);
-        UsersGames.put(auth.authToken(), gameList);
+        if (UsersGames.containsKey(auth.authToken())) {
+            UsersGames.get(auth.authToken()).add(game);
+        } else {
+            UsersGames.put(auth.authToken(), gameList);
+        }
         return game;
     }
 
     @Override
     public GameData getGame(GameData game, AuthData auth) {
         var games = UsersGames.get(auth.authToken());
-        if (games.contains(game)) {
+        if (games != null && games.contains(game)) {
             return game;
         }
         return null;
@@ -33,11 +37,12 @@ public class MemoryGameDAO implements GameDAO {
 
     @Override
     public Collection<GameData> listGames(AuthData auth) {
-        return List.of();
+        return UsersGames.get(auth.authToken());
     }
 
     @Override
-    public GameData updateGame(GameData game, AuthData auth) {
+    public GameData updateGame(int gameID, AuthData auth) {
+        var games = UsersGames.get(auth.authToken());
         return null;
     }
 }

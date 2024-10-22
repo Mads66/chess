@@ -11,8 +11,13 @@ import java.util.Collection;
 public class GameService {
     private final MemoryGameDAO gameAccess = new MemoryGameDAO();
 
-    public Collection<GameData> listGames(AuthData auth) {
-        return null;
+    public Collection<GameData> listGames(AuthData auth, UserService userService) throws Exception {
+        var authCheck = userService.getAuth(auth);
+        if (authCheck == null) {
+            throw new ServiceException("Error: unauthorized");
+        } else {
+            return gameAccess.listGames(auth);
+        }
     }
 
     public GameData createGame(String gameName, AuthData auth, UserService service) throws Exception {
