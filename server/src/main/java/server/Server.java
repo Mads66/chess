@@ -1,11 +1,8 @@
 package server;
 
 import com.google.gson.Gson;
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryUserDAO;
 import exception.ResponseException;
 import model.*;
-import org.eclipse.jetty.server.Authentication;
 import service.GameService;
 import spark.*;
 import service.UserService;
@@ -63,7 +60,7 @@ public class Server {
         return "";
     }
 
-    private AuthData headerHandler(Request request) throws Exception {
+    private AuthData headerHandler(Request request) {
         Set<String> headers = request.headers();
         String authToken = null;
         String username = null;
@@ -104,7 +101,7 @@ public class Server {
         return new Gson().toJson(res);
     }
 
-    private Object clear(Request request, Response response) throws Exception {
+    private Object clear(Request request, Response response) {
         userService.clear();
         response.status(200);
         return "";
