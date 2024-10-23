@@ -15,7 +15,7 @@ public class MemoryGameDAO implements GameDAO {
     @Override
     public GameData createGame(String gameName, AuthData auth) {
         var game = new GameData(gameID++, null, null, gameName, new ChessGame());
-        allGames.put(game.gameId(), game);
+        allGames.put(game.gameID(), game);
         games.add(game);
         return game;
     }
@@ -54,7 +54,7 @@ public class MemoryGameDAO implements GameDAO {
         GameData oldGameData = null;
 
         for (GameData game : games) {
-            if (game.gameId() == newGame.gameId()) {
+            if (game.gameID() == newGame.gameID()) {
                 oldGameData = game;
                 break;
             }
