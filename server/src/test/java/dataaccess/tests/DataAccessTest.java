@@ -1,4 +1,4 @@
-package dataaccessTests;
+package dataaccess.tests;
 
 import dataaccess.MemoryUserDAO;
 import model.UserData;

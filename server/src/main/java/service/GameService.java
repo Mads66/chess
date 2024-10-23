@@ -31,14 +31,14 @@ public class GameService {
         }
     }
 
-    public void joinGame(AuthData auth, String playerColor, int GameId, UserService service) throws Exception {
+    public void joinGame(AuthData auth, String playerColor, int gameId, UserService service) throws Exception {
         var authCheck = service.getAuth(auth);
         if (authCheck == null) {
             throw new ResponseException(401, "Error: unauthorized");
-        } else if (GameId <= 0) {
+        } else if (gameId <= 0) {
             throw new ResponseException(400, "Error: bad request");
         } else if (playerColor != null && (playerColor.equals("BLACK") || playerColor.equals("WHITE"))) {
-            gameAccess.joinGame(authCheck, playerColor, GameId);
+            gameAccess.joinGame(authCheck, playerColor, gameId);
         } else {
             throw new ResponseException(400, "Error: bad request");
         }

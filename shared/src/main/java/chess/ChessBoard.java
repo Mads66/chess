@@ -14,8 +14,12 @@ public class ChessBoard {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         ChessBoard that = (ChessBoard) o;
         return Objects.deepEquals(squares, that.squares);
     }
@@ -26,7 +30,7 @@ public class ChessBoard {
     }
 
     public ChessBoard() {
-        
+
     }
 
     /**
@@ -59,25 +63,27 @@ public class ChessBoard {
         setupRow(7, ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
 
         setupRow(1, ChessGame.TeamColor.WHITE, new ChessPiece.PieceType[]{
-            ChessPiece.PieceType.ROOK, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.BISHOP,
-                    ChessPiece.PieceType.QUEEN, ChessPiece.PieceType.KING, ChessPiece.PieceType.BISHOP, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.ROOK
+                ChessPiece.PieceType.ROOK, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.BISHOP,
+                ChessPiece.PieceType.QUEEN, ChessPiece.PieceType.KING, ChessPiece.PieceType.BISHOP,
+                ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.ROOK
         });
 
         setupRow(8, ChessGame.TeamColor.BLACK, new ChessPiece.PieceType[]{
                 ChessPiece.PieceType.ROOK, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.BISHOP,
-                ChessPiece.PieceType.QUEEN, ChessPiece.PieceType.KING, ChessPiece.PieceType.BISHOP, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.ROOK
+                ChessPiece.PieceType.QUEEN, ChessPiece.PieceType.KING, ChessPiece.PieceType.BISHOP,
+                ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.ROOK
         });
     }
 
-    private void setupRow (int row, ChessGame.TeamColor color, ChessPiece.PieceType piece) {
+    private void setupRow(int row, ChessGame.TeamColor color, ChessPiece.PieceType piece) {
         for (int col = 0; col < 8; col++) {
-            squares[row][col+1] = new ChessPiece(color, piece);
+            squares[row][col + 1] = new ChessPiece(color, piece);
         }
     }
 
-    private void setupRow (int row, ChessGame.TeamColor color, ChessPiece.PieceType[] piece) {
+    private void setupRow(int row, ChessGame.TeamColor color, ChessPiece.PieceType[] piece) {
         for (int col = 0; col < 8; col++) {
-            squares[row][col+1] = new ChessPiece(color, piece[col]);
+            squares[row][col + 1] = new ChessPiece(color, piece[col]);
         }
     }
 }

@@ -23,8 +23,12 @@ public class ChessPiece {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         ChessPiece that = (ChessPiece) o;
         return pieceColor == that.pieceColor && type == that.type;
     }
@@ -68,21 +72,27 @@ public class ChessPiece {
                 '}';
     }
 
-    /**
-     * Calculates all the positions a chess piece can move to
-     * Does not take into account moves that are illegal due to leaving the king in
-     * danger
-     *
-     * @return Collection of valid moves
-     */
+
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> moves = new ArrayList<>();
-        if (type == PieceType.BISHOP) moves = bishopMoves(board, myPosition);
-        if (type == PieceType.KING) moves = kingMoves(board, myPosition);
-        if (type == PieceType.KNIGHT) moves = knightMoves(board, myPosition);
-        if (type == PieceType.PAWN) moves = pawnMoves(board, myPosition);
-        if (type == PieceType.ROOK) moves = rookMoves(board, myPosition);
-        if (type == PieceType.QUEEN) moves = queenMoves(board, myPosition);
+        if (type == PieceType.BISHOP) {
+            moves = bishopMoves(board, myPosition);
+        }
+        if (type == PieceType.KING) {
+            moves = kingMoves(board, myPosition);
+        }
+        if (type == PieceType.KNIGHT) {
+            moves = knightMoves(board, myPosition);
+        }
+        if (type == PieceType.PAWN) {
+            moves = pawnMoves(board, myPosition);
+        }
+        if (type == PieceType.ROOK) {
+            moves = rookMoves(board, myPosition);
+        }
+        if (type == PieceType.QUEEN) {
+            moves = queenMoves(board, myPosition);
+        }
         return moves;
     }
 
@@ -176,18 +186,18 @@ public class ChessPiece {
         List<ChessMove> moves = new ArrayList<>();
         int[] rowDirections = {};
         int[] colDirections = {};
-        if (pieceColor == ChessGame.TeamColor.BLACK && myPosition.getRow() == 7){
-            rowDirections = new int[] {-1,-2,-1,-1};
-            colDirections = new int[] {0,0,-1,1};
-        } else if (pieceColor == ChessGame.TeamColor.WHITE && myPosition.getRow() == 2){
-            rowDirections = new int[] {1,2,1,1};
-            colDirections = new int[] {0,0,-1,1};
+        if (pieceColor == ChessGame.TeamColor.BLACK && myPosition.getRow() == 7) {
+            rowDirections = new int[]{-1, -2, -1, -1};
+            colDirections = new int[]{0, 0, -1, 1};
+        } else if (pieceColor == ChessGame.TeamColor.WHITE && myPosition.getRow() == 2) {
+            rowDirections = new int[]{1, 2, 1, 1};
+            colDirections = new int[]{0, 0, -1, 1};
         } else if (pieceColor == ChessGame.TeamColor.BLACK) {
-            rowDirections = new int[] {-1,-1,-1};
-            colDirections = new int[] {0,-1,1};
+            rowDirections = new int[]{-1, -1, -1};
+            colDirections = new int[]{0, -1, 1};
         } else {
-            rowDirections = new int[] {1,1,1};
-            colDirections = new int[] {0,-1,1};
+            rowDirections = new int[]{1, 1, 1};
+            colDirections = new int[]{0, -1, 1};
         }
 
         for (int i = 0; i < rowDirections.length; i++) {

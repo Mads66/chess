@@ -39,7 +39,7 @@ public class Server {
     }
 
     private void exceptionHandler(ResponseException ex, Request req, Response res) {
-        res.status(ex.StatusCode());
+        res.status(ex.statusCode());
 
         // Build the JSON response string manually
         String jsonResponse = String.format("{ \"message\": \"%s\" }", ex.getMessage());
