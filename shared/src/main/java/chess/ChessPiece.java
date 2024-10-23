@@ -100,32 +100,7 @@ public class ChessPiece {
         List<ChessMove> moves = new ArrayList<>();
         int[] rowDirections = {1, -1, -1, 1};
         int[] colDirections = {1, 1, -1, -1};
-
-        for (int i = 0; i < rowDirections.length; i++) {
-            int rowIncrement = rowDirections[i];
-            int colIncrement = colDirections[i];
-            int row = myPosition.getRow();
-            int col = myPosition.getColumn();
-
-            while (true) {
-                row += rowIncrement;
-                col += colIncrement;
-
-                if (isValidPosition(row, col)) {
-                    ChessPosition position = new ChessPosition(row, col);
-                    if (board.getPiece(position) == null) {
-                        moves.add(new ChessMove(myPosition, position, null));
-                    } else if (board.getPiece(position).getTeamColor() != pieceColor) {
-                        moves.add(new ChessMove(myPosition, position, null));
-                        break;
-                    } else {
-                        break;
-                    }
-                } else {
-                    break;
-                }
-            }
-        }
+        moves.addAll(continuousMoves(board, myPosition, rowDirections, colDirections));
         return moves;
     }
 
@@ -138,17 +113,7 @@ public class ChessPiece {
         int[] rowDirections = {-1, -1, -1, 0, 0, 1, 1, 1}; //down, down-right, down-left, left, right, up, up-right, up-left
         int[] colDirections = {0, 1, -1, 1, -1, 0, 1, -1};
 
-        for (int i = 0; i < rowDirections.length; i++) {
-            int rowIncrement = rowDirections[i];
-            int colIncrement = colDirections[i];
-            int row = myPosition.getRow() + rowIncrement;
-            int col = myPosition.getColumn() + colIncrement;
-
-            ChessPosition position = new ChessPosition(row, col);
-            List<ChessMove> tempMoves = (List<ChessMove>) assembleChessMoves(board, myPosition, position, row, col);
-            moves.addAll(tempMoves);
-        }
-        return moves;
+        return getChessMoves(board, myPosition, moves, rowDirections, colDirections);
     }
 
     private Collection<ChessMove> assembleChessMoves(ChessBoard board, ChessPosition myPosition, ChessPosition position, int row, int col) {
@@ -168,6 +133,10 @@ public class ChessPiece {
         int[] rowDirections = {2, 2, 1, 1, -1, -1, -2, -2}; //up-right, up-left, left-up, right-up, left-down, right-down, down-right, down-left
         int[] colDirections = {1, -1, 2, -2, 2, -2, 1, -1};
 
+        return getChessMoves(board, myPosition, moves, rowDirections, colDirections);
+    }
+
+    private Collection<ChessMove> getChessMoves(ChessBoard board, ChessPosition myPosition, List<ChessMove> moves, int[] rowDirections, int[] colDirections) {
         for (int i = 0; i < rowDirections.length; i++) {
             int rowIncrement = rowDirections[i];
             int colIncrement = colDirections[i];
@@ -239,7 +208,12 @@ public class ChessPiece {
         List<ChessMove> moves = new ArrayList<>();
         int[] rowDirections = {1, -1, 0, 0};
         int[] colDirections = {0, 0, -1, 1};
+        moves.addAll(continuousMoves(board, myPosition, rowDirections, colDirections));
+        return moves;
+    }
 
+    private Collection<ChessMove> continuousMoves(ChessBoard board, ChessPosition myPosition, int[] rowDirections, int[] colDirections) {
+        Collection<ChessMove> moves = new ArrayList<>();
         for (int i = 0; i < rowDirections.length; i++) {
             int rowIncrement = rowDirections[i];
             int colIncrement = colDirections[i];
@@ -267,6 +241,7 @@ public class ChessPiece {
         }
         return moves;
     }
+
 
     private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition) {
         List<ChessMove> moves = new ArrayList<>();
