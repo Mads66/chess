@@ -209,29 +209,28 @@ public class ChessPiece {
 
             if (isValidPosition(row, col)) {
                 if (colIncrement == 0 && moves.size() == i && board.getPiece(position) == null) {
-                    if (row == 8 || row == 1) {
-                        moves.add(new ChessMove(myPosition, position, PieceType.QUEEN));
-                        moves.add(new ChessMove(myPosition, position, PieceType.KNIGHT));
-                        moves.add(new ChessMove(myPosition, position, PieceType.BISHOP));
-                        moves.add(new ChessMove(myPosition, position, PieceType.ROOK));
-                    } else {
-                        moves.add(new ChessMove(myPosition, position, null));
-                    }
+                    moves.addAll(pawnPromo(myPosition, position, row));
                 }
                 if (colDirections.length == 3 && i > 0 && board.getPiece(position) != null) {
                     if (board.getPiece(position).getTeamColor() != pieceColor) {
-                        if (row == 8 || row == 1) {
-                            moves.add(new ChessMove(myPosition, position, PieceType.QUEEN));
-                            moves.add(new ChessMove(myPosition, position, PieceType.KNIGHT));
-                            moves.add(new ChessMove(myPosition, position, PieceType.BISHOP));
-                            moves.add(new ChessMove(myPosition, position, PieceType.ROOK));
-                        } else {
-                            moves.add(new ChessMove(myPosition, position, null));
-                        }
+                        moves.addAll(pawnPromo(myPosition, position, row));
                     }
                 }
 
             }
+        }
+        return moves;
+    }
+
+    private Collection<ChessMove> pawnPromo(ChessPosition myPosition, ChessPosition position, int row) {
+        List<ChessMove> moves = new ArrayList<>();
+        if (row == 8 || row == 1) {
+            moves.add(new ChessMove(myPosition, position, PieceType.QUEEN));
+            moves.add(new ChessMove(myPosition, position, PieceType.KNIGHT));
+            moves.add(new ChessMove(myPosition, position, PieceType.BISHOP));
+            moves.add(new ChessMove(myPosition, position, PieceType.ROOK));
+        } else {
+            moves.add(new ChessMove(myPosition, position, null));
         }
         return moves;
     }
