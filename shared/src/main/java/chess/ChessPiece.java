@@ -136,7 +136,8 @@ public class ChessPiece {
         return getChessMoves(board, myPosition, moves, rowDirections, colDirections);
     }
 
-    private Collection<ChessMove> getChessMoves(ChessBoard board, ChessPosition myPosition, List<ChessMove> moves, int[] rowDirections, int[] colDirections) {
+    private Collection<ChessMove> getChessMoves(ChessBoard board, ChessPosition myPosition, List<ChessMove> moves,
+                                                int[] rowDirections, int[] colDirections) {
         for (int i = 0; i < rowDirections.length; i++) {
             int rowIncrement = rowDirections[i];
             int colIncrement = colDirections[i];
