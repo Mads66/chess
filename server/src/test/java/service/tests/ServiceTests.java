@@ -5,7 +5,6 @@ import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.Test;
 import service.GameService;
-import service.ServiceException;
 import service.UserService;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,14 +25,14 @@ public class ServiceTests {
         var user = new UserData("username", "password", "email@email.com");
         service.registerUser(user);
         var duplicateUsername = new UserData("username", "password", "emails@email.com");
-        assertThrows(ServiceException.class, () -> service.registerUser(duplicateUsername));
+        assertThrows(ResponseException.class, () -> service.registerUser(duplicateUsername));
     }
 
     @Test
     public void registerUserBadRequest() {
         var service = new UserService();
         var user = new UserData("username", null, null);
-        assertThrows(ServiceException.class, () -> service.registerUser(user));
+        assertThrows(ResponseException.class, () -> service.registerUser(user));
     }
 
     @Test
@@ -50,7 +49,7 @@ public class ServiceTests {
     public void loginUserBadRequest() {
         var service = new UserService();
         var user = new UserData("username", "password", "email@email.com");
-        assertThrows(ServiceException.class, () -> service.loginUser(user));
+        assertThrows(ResponseException.class, () -> service.loginUser(user));
     }
 
     @Test
@@ -66,7 +65,7 @@ public class ServiceTests {
     public void badLogout() {
         var service = new UserService();
         var badAuth = new AuthData("blahblahblah", "username");
-        assertThrows(ServiceException.class, () -> service.logoutUser(badAuth));
+        assertThrows(ResponseException.class, () -> service.logoutUser(badAuth));
     }
 
     @Test
@@ -82,18 +81,18 @@ public class ServiceTests {
     @Test
     public void createGameUnauthorized() {
         var game = new GameService();
-        var userS = new UserService();
+        var userService = new UserService();
         var badAuth = new AuthData("Tehe-I-am-not-real", "username_who");
-        assertThrows(ServiceException.class, () -> game.createGame("IamUnauthorized", badAuth, userS));
+        assertThrows(ResponseException.class, () -> game.createGame("IamUnauthorized", badAuth, userService));
     }
 
     @Test
     public void createGameBadRequest() throws Exception {
         var game = new GameService();
-        var userS = new UserService();
+        var userService = new UserService();
         var user = new UserData("username", "password", "email@email.com");
-        var registered = userS.registerUser(user);
-        assertThrows(ServiceException.class, () -> game.createGame(null, registered, userS));
+        var registered = userService.registerUser(user);
+        assertThrows(ResponseException.class, () -> game.createGame(null, registered, userService));
     }
 
     @Test
@@ -112,61 +111,61 @@ public class ServiceTests {
     @Test
     public void listGamesUnauthorized() {
         var service = new GameService();
-        var userS = new UserService();
+        var userService = new UserService();
         var unauthorized = new AuthData("who-is-this", "username_who");
-        assertThrows(ResponseException.class, () -> service.listGames(unauthorized, userS));
+        assertThrows(ResponseException.class, () -> service.listGames(unauthorized, userService));
     }
 
     @Test
     public void joinGame() throws Exception {
         var service = new GameService();
-        var userS = new UserService();
+        var userService = new UserService();
         var user = new UserData("username", "password", "email@email.com");
-        var registered = userS.registerUser(user);
-        service.createGame("AwesomeGame", registered, userS);
-        service.createGame("AwesomeGame2", registered, userS);
-        service.createGame("AwesomeGame3", registered, userS);
-        assertDoesNotThrow(() -> service.joinGame(registered, "BLACK", 1, userS));
+        var registered = userService.registerUser(user);
+        service.createGame("AwesomeGame", registered, userService);
+        service.createGame("AwesomeGame2", registered, userService);
+        service.createGame("AwesomeGame3", registered, userService);
+        assertDoesNotThrow(() -> service.joinGame(registered, "BLACK", 1234, userService));
     }
 
     @Test
     public void joinGameNotFound() throws Exception {
         var service = new GameService();
-        var userS = new UserService();
+        var userService = new UserService();
         var user = new UserData("username", "password", "email@email.com");
-        var registered = userS.registerUser(user);
-        assertThrows(ResponseException.class, () -> service.joinGame(registered, "BLACK", 1, userS));
+        var registered = userService.registerUser(user);
+        assertThrows(ResponseException.class, () -> service.joinGame(registered, "BLACK", 1, userService));
     }
 
     @Test
     public void joinGameBadRequest() throws Exception {
         var service = new GameService();
-        var userS = new UserService();
+        var userService = new UserService();
         var user = new UserData("username", "password", "email@email.com");
-        var registered = userS.registerUser(user);
+        var registered = userService.registerUser(user);
         var badAuth = new AuthData("BLAH", "HAH");
-        assertThrows(ResponseException.class, () -> service.joinGame(registered, "BLACK", 0, userS));
-        assertThrows(ResponseException.class, () -> service.joinGame(registered, "BLUE", 1, userS));
-        assertThrows(ResponseException.class, () -> service.joinGame(badAuth, "BLACK", 2, userS));
+        assertThrows(ResponseException.class, () -> service.joinGame(registered, "BLACK", 0, userService));
+        assertThrows(ResponseException.class, () -> service.joinGame(registered, "BLUE", 1, userService));
+        assertThrows(ResponseException.class, () -> service.joinGame(badAuth, "BLACK", 2, userService));
     }
 
     @Test
     public void clearDatabase() throws Exception {
         var service = new GameService();
-        var userS = new UserService();
+        var userService = new UserService();
         var user = new UserData("username", "password", "email@email.com");
         var user2 = new UserData("username2", "password2", "email2@email.com");
         var user3 = new UserData("username3", "password3", "email3@email.com");
-        var one = userS.registerUser(user);
-        var two = userS.registerUser(user2);
-        var three = userS.registerUser(user3);
-        service.createGame("HOOTS", one, userS);
-        service.createGame("HOOTS2", two, userS);
-        service.createGame("HOOTS3", three, userS);
+        var one = userService.registerUser(user);
+        var two = userService.registerUser(user2);
+        var three = userService.registerUser(user3);
+        service.createGame("HOOTS", one, userService);
+        service.createGame("HOOTS2", two, userService);
+        service.createGame("HOOTS3", three, userService);
         service.clear();
-        userS.clear();
-        assertThrows(ResponseException.class, () -> service.joinGame(one, "BLACK", 1, userS));
-        assertThrows(ResponseException.class, () -> userS.loginUser(user2));
-        assertThrows(ResponseException.class, () -> service.listGames(three, userS));
+        userService.clear();
+        assertThrows(ResponseException.class, () -> service.joinGame(one, "BLACK", 1, userService));
+        assertThrows(ResponseException.class, () -> userService.loginUser(user2));
+        assertThrows(ResponseException.class, () -> service.listGames(three, userService));
     }
 }
