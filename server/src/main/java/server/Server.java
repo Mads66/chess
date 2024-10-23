@@ -77,7 +77,6 @@ public class Server {
         var auth = headerHandler(request);
         var result = gameService.listGames(auth, userService);
         response.status(200);
-        response.type("application/json");
         return listGameFormatter(result);
     }
 
