@@ -68,7 +68,7 @@ public class Server {
         var gameName = new Gson().fromJson(request.body(), CreateGameRequest.class);
         var result = gameService.createGame(gameName.gameName(), auth, userService);
         response.status(200);
-        String jsonResponse = String.format("{ \"gameID\":\"%s\" }", result.gameId());
+        String jsonResponse = String.format("{ \"gameID\":\"%s\" }", result.gameID());
         response.type("application/json");
         return jsonResponse;
     }
@@ -84,12 +84,11 @@ public class Server {
         Collection<ListGameResponse> listGameResponses = new ArrayList<>();
 
         for (GameData gameData : gameList) {
-            listGameResponses.add(new ListGameResponse(gameData.gameId(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName()));
+            listGameResponses.add(new ListGameResponse(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName()));
         }
 
         Map<String, Collection<ListGameResponse>> responseMap = new HashMap<>();
         responseMap.put("games", listGameResponses);
-
         return new Gson().toJson(responseMap);
     }
 
