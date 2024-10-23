@@ -51,11 +51,18 @@ public class MemoryGameDAO implements GameDAO {
     }
 
     private void updateGames(GameData newGame) {
-        for (GameData gameData : games) {
-            if (gameData.gameId() == newGame.gameId()) {
-                games.remove(gameData);
-                games.add(newGame);
+        GameData oldGameData = null;
+
+        for (GameData game : games) {
+            if (game.gameId() == newGame.gameId()) {
+                oldGameData = game;
+                break;
             }
+        }
+
+        if (oldGameData != null) {
+            games.remove(oldGameData);
+            games.add(newGame);
         }
     }
 

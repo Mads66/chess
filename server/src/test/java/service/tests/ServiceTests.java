@@ -125,7 +125,9 @@ public class ServiceTests {
         service.createGame("AwesomeGame", registered, userService);
         service.createGame("AwesomeGame2", registered, userService);
         service.createGame("AwesomeGame3", registered, userService);
-        assertDoesNotThrow(() -> service.joinGame(registered, "BLACK", 1234, userService));
+        service.joinGame(registered, "BLACK", 1235, userService);
+        var list = service.listGames(registered, userService);
+        assertEquals(list.size(), 3);
     }
 
     @Test
