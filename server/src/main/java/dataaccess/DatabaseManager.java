@@ -1,5 +1,7 @@
 package dataaccess;
 
+import exception.ResponseException;
+
 import java.sql.*;
 import java.util.Properties;
 
@@ -36,7 +38,7 @@ public class DatabaseManager {
     /**
      * Creates the database if it does not already exist.
      */
-    static void createDatabase() throws DataAccessException {
+    static void createDatabase() throws ResponseException {
         try {
             var statement = "CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME;
             var conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
@@ -44,7 +46,7 @@ public class DatabaseManager {
                 preparedStatement.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new DataAccessException(e.getMessage());
+            throw new ResponseException(500, e.getMessage());
         }
     }
 
