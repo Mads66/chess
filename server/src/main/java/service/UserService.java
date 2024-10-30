@@ -1,14 +1,17 @@
 package service;
 
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryUserDAO;
+import dataaccess.SQLAuthDAO;
+import dataaccess.SQLUserDAO;
 import exception.ResponseException;
 import model.AuthData;
 import model.UserData;
 
 public class UserService {
-    private final MemoryUserDAO userAccess = new MemoryUserDAO();
-    private final MemoryAuthDAO authAccess = new MemoryAuthDAO();
+    private final SQLUserDAO userAccess = new SQLUserDAO();
+    private final SQLAuthDAO authAccess = new SQLAuthDAO();
+
+    public UserService() throws ResponseException {
+    }
 
     public AuthData registerUser(UserData user) throws Exception {
         if (user.password() == null || user.email() == null) {
@@ -42,7 +45,7 @@ public class UserService {
         return authAccess.getAuth(auth);
     }
 
-    public void clear() {
+    public void clear() throws ResponseException {
         authAccess.clear();
         userAccess.clear();
     }

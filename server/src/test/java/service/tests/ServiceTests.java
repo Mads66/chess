@@ -29,7 +29,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void registerUserBadRequest() {
+    public void registerUserBadRequest() throws ResponseException {
         var service = new UserService();
         var user = new UserData("username", null, null);
         assertThrows(ResponseException.class, () -> service.registerUser(user));
@@ -46,7 +46,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void loginUserBadRequest() {
+    public void loginUserBadRequest() throws ResponseException {
         var service = new UserService();
         var user = new UserData("username", "password", "email@email.com");
         assertThrows(ResponseException.class, () -> service.loginUser(user));
@@ -62,7 +62,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void badLogout() {
+    public void badLogout() throws ResponseException {
         var service = new UserService();
         var badAuth = new AuthData("blahblahblah", "username");
         assertThrows(ResponseException.class, () -> service.logoutUser(badAuth));
@@ -79,7 +79,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void createGameUnauthorized() {
+    public void createGameUnauthorized() throws ResponseException {
         var game = new GameService();
         var userService = new UserService();
         var badAuth = new AuthData("Tehe-I-am-not-real", "username_who");
@@ -109,7 +109,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void listGamesUnauthorized() {
+    public void listGamesUnauthorized() throws ResponseException {
         var service = new GameService();
         var userService = new UserService();
         var unauthorized = new AuthData("who-is-this", "username_who");

@@ -14,6 +14,9 @@ public class Server {
     private final UserService userService = new UserService();
     private final GameService gameService = new GameService();
 
+    public Server() throws ResponseException {
+    }
+
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
@@ -106,7 +109,7 @@ public class Server {
         return new Gson().toJson(res);
     }
 
-    private Object clear(Request request, Response response) {
+    private Object clear(Request request, Response response) throws ResponseException {
         userService.clear();
         gameService.clear();
         response.status(200);
