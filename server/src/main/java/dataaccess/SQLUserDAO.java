@@ -1,10 +1,16 @@
 package dataaccess;
 
+import com.google.gson.Gson;
 import exception.ResponseException;
+import model.AuthData;
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.UUID;
 
+import static dataaccess.DatabaseManager.executeUpdate;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static java.sql.Types.NULL;
 
@@ -28,13 +34,42 @@ public class SQLUserDAO implements UserDAO {
     }
 
     @Override
-    public void createUser(UserData user) {
-
+    public void createUser(UserData user) throws ResponseException {
+        String auth = UUID.randomUUID().toString();
+        var statement = "INSERT INTO auth (username, password, email, json) VALUES (?, ?, ?, ?)";
+        var json = new Gson().toJson(user);
+        var password = BCrypt.hashpw(user.password(), BCrypt.gensalt());
+        executeUpdate(statement, user.username(), password, user.email(), json);
     }
 
     @Override
     public UserData getUser(UserData user) throws Exception {
+        try (var conn = DatabaseManager.getConnection()) {
+            var statement = "SELECT username, json FROM user WHERE username = ?";
+            try (var ps = conn.prepareStatement(statement)) {
+                ps.setString(1, user.username());
+                try (var rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return readUser(rs);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new ResponseException(500, String.format("Unable to read data: %s", e.getMessage()));
+        }
         return null;
+    }
+
+    private UserData readUser(ResultSet rs) throws SQLException {
+        var username = rs.getString("username");
+        var json = rs.getString("json");
+        var user = new Gson().fromJson(json, UserData.class);
+        return user.setId(username);
+    }
+
+    public void clear() throws ResponseException {
+        var statement = "TRUNCATE user";
+        executeUpdate(statement);
     }
 
 }

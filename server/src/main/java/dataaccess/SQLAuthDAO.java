@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
+import static dataaccess.DatabaseManager.executeUpdate;
 import static java.sql.Types.NULL;
 
 public class SQLAuthDAO implements AuthDAO {
@@ -58,7 +59,7 @@ public class SQLAuthDAO implements AuthDAO {
 
     @Override
     public void deleteAuth(AuthData auth) throws ResponseException {
-        var statement = "DELETE FROM pet WHERE authToken=?";
+        var statement = "DELETE FROM auth WHERE authToken=?";
         DatabaseManager.executeUpdate(statement, auth.authToken());
     }
 
@@ -67,6 +68,11 @@ public class SQLAuthDAO implements AuthDAO {
         var json = rs.getString("json");
         var auth = new Gson().fromJson(json, AuthData.class);
         return auth.setId(authToken);
+    }
+
+    public void clear() throws ResponseException {
+        var statement = "TRUNCATE auth";
+        executeUpdate(statement);
     }
 
 }
