@@ -11,7 +11,7 @@ public interface GameDAO {
 
     GameData getGame(int gameID) throws ResponseException;
 
-    Collection<GameData> listGames(AuthData auth);
+    Collection<GameData> listGames(AuthData auth) throws ResponseException;
 
     void joinGame(AuthData auth, String playerColor, int gameID) throws Exception;
 }

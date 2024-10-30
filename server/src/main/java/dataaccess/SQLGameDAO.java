@@ -8,17 +8,34 @@ import model.GameData;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Objects;
 
-import static dataaccess.DatabaseManager.executeUpdate;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static java.sql.Types.NULL;
 
 public class SQLGameDAO implements GameDAO {
 
-    public SQLGameDAO() {
-
+    public SQLGameDAO() throws ResponseException {
+        String[] createStatements = {
+                """
+            CREATE TABLE IF NOT EXISTS  games (
+              `gameID` int NOT NULL AUTO_INCREMENT,
+              `whiteUsername` varchar(256) NOT NULL,
+              `blackUsername` varchar(256) NOT NULL,
+              `gameName` varchar(256) NOT NULL,
+              `chessGame` varchar(256) NOT NULL,
+              `json` TEXT DEFAULT NULL,
+              PRIMARY KEY (`gameID`),
+              INDEX(whiteUsername),
+              INDEX(blackUsername),
+              INDEX(gameName),
+              INDEX(chessGame)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+            """
+        };
+        DatabaseManager.configureDatabase(createStatements);
     }
 
     @Override
@@ -60,13 +77,39 @@ public class SQLGameDAO implements GameDAO {
     }
 
     @Override
-    public Collection<GameData> listGames(AuthData auth) {
-        return List.of();
+    public Collection<GameData> listGames(AuthData auth) throws ResponseException {
+        var result = new ArrayList<GameData>();
+        try (var conn = DatabaseManager.getConnection()) {
+            var statement = "SELECT gameID, json FROM games";
+            try (var ps = conn.prepareStatement(statement)) {
+                try (var rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        result.add(readGame(rs));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new ResponseException(500, String.format("Unable to read data: %s", e.getMessage()));
+        }
+        return result;
     }
 
     @Override
     public void joinGame(AuthData auth, String playerColor, int gameID) throws Exception {
-
+        var game = getGame(gameID);
+        if (game != null) {
+            if (Objects.equals(playerColor, "BLACK") && game.blackUsername() == null) {
+                var statement = "UPDATE games SET blackUsername = ? WHERE gameID = ?";
+                executeUpdate(statement, playerColor, gameID);
+            } else if (Objects.equals(playerColor, "WHITE") && game.whiteUsername() == null) {
+                var statement = "UPDATE games SET whiteUsername = ? WHERE gameID = ?";
+                executeUpdate(statement, playerColor, gameID);
+            } else {
+                throw new ResponseException(403, "Error: already taken");
+            }
+        } else {
+            throw new ResponseException(400, "Error: bad request");
+        }
     }
 
     public void clear() throws ResponseException {
@@ -79,10 +122,15 @@ public class SQLGameDAO implements GameDAO {
             try (var ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
                 for (var i = 0; i < params.length; i++) {
                     var param = params[i];
-                    if (param instanceof String p) ps.setString(i + 1, p);
-                    else if (param instanceof Integer p) ps.setInt(i + 1, p);
-                    else if (param instanceof ChessGame p) ps.setString(i + 1, p.toString());
-                    else if (param == null) ps.setNull(i + 1, NULL);
+                    if (param instanceof String p) {
+                        ps.setString(i + 1, p);
+                    } else if (param instanceof Integer p) {
+                        ps.setInt(i + 1, p);
+                    } else if (param instanceof ChessGame p) {
+                        ps.setString(i + 1, p.toString());
+                    } else if (param == null) {
+                        ps.setNull(i + 1, NULL);
+                    }
                 }
                 ps.executeUpdate();
 
@@ -100,21 +148,4 @@ public class SQLGameDAO implements GameDAO {
         }
     }
 
-    private final String[] createStatements = {
-            """
-            CREATE TABLE IF NOT EXISTS  games (
-              `gameID` int NOT NULL AUTO_INCREMENT,
-              `whiteUsername` varchar(256) NOT NULL,
-              `blackUsername` varchar(256) NOT NULL,
-              `gameName` varchar(256) NOT NULL,
-              `chessGame` varchar(256) NOT NULL,
-              `json` TEXT DEFAULT NULL,
-              PRIMARY KEY (`gameID`),
-              INDEX(whiteUsername),
-              INDEX(blackUsername),
-              INDEX(gameName),
-              INDEX(chessGame)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-            """
-    };
 }

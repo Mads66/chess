@@ -1,6 +1,5 @@
 package service;
 
-import dataaccess.MemoryGameDAO;
 import dataaccess.SQLGameDAO;
 import exception.ResponseException;
 import model.AuthData;
@@ -10,6 +9,9 @@ import java.util.Collection;
 
 public class GameService {
     private final SQLGameDAO gameAccess = new SQLGameDAO();
+
+    public GameService() throws ResponseException {
+    }
 
     public Collection<GameData> listGames(AuthData auth, UserService userService) throws Exception {
         var authCheck = userService.getAuth(auth);
@@ -45,7 +47,7 @@ public class GameService {
         }
     }
 
-    public void clear() {
+    public void clear() throws ResponseException {
         gameAccess.clear();
     }
 
