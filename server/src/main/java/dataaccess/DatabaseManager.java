@@ -5,6 +5,8 @@ import exception.ResponseException;
 import java.sql.*;
 import java.util.Properties;
 
+import static java.sql.Types.NULL;
+
 public class DatabaseManager {
     private static final String DATABASE_NAME;
     private static final String USER;
@@ -69,6 +71,39 @@ public class DatabaseManager {
             return conn;
         } catch (SQLException e) {
             throw new DataAccessException(e.getMessage());
+        }
+    }
+
+    static void executeUpdate(String statement, Object... params) throws ResponseException {
+        try (var conn = getConnection()) {
+            try (var ps = conn.prepareStatement(statement)) {
+                for (var i = 0; i < params.length; i++) {
+                    var param = params[i];
+                    if (param instanceof String p) {
+                        ps.setString(i + 1, p);
+                    } else if (param instanceof Integer p) {
+                        ps.setInt(i + 1, p);
+                    } else if (param == null) {
+                        ps.setNull(i + 1, NULL);
+                    }
+                }
+                ps.executeUpdate();
+            }
+        } catch (SQLException | DataAccessException e) {
+            throw new ResponseException(500, String.format("unable to update database: %s, %s", statement, e.getMessage()));
+        }
+    }
+
+    static void configureDatabase(String[] createStatements) throws ResponseException {
+        createDatabase();
+        try (var conn = getConnection()) {
+            for (var statement : createStatements) {
+                try (var preparedStatement = conn.prepareStatement(statement)) {
+                    preparedStatement.executeUpdate();
+                }
+            }
+        } catch (SQLException | DataAccessException ex) {
+            throw new ResponseException(500, String.format("Unable to configure database: %s", ex.getMessage()));
         }
     }
 }
