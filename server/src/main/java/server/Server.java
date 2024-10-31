@@ -11,10 +11,19 @@ import java.util.*;
 
 public class Server {
 
-    private final UserService userService = new UserService();
-    private final GameService gameService = new GameService();
+    private UserService userService;
+    private GameService gameService;
 
-    public Server() throws ResponseException {
+    {
+        try {
+            gameService = new GameService();
+            userService = new UserService();
+        } catch (ResponseException e) {
+            Spark.exception(ResponseException.class, this::exceptionHandler);
+        }
+    }
+
+    public Server() {
     }
 
 

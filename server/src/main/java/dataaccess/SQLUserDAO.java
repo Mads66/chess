@@ -2,17 +2,13 @@ package dataaccess;
 
 import com.google.gson.Gson;
 import exception.ResponseException;
-import model.AuthData;
 import model.UserData;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.UUID;
 
 import static dataaccess.DatabaseManager.executeUpdate;
-import static java.sql.Statement.RETURN_GENERATED_KEYS;
-import static java.sql.Types.NULL;
 
 public class SQLUserDAO implements UserDAO {
 
@@ -35,8 +31,7 @@ public class SQLUserDAO implements UserDAO {
 
     @Override
     public void createUser(UserData user) throws ResponseException {
-        String auth = UUID.randomUUID().toString();
-        var statement = "INSERT INTO auth (username, password, email, json) VALUES (?, ?, ?, ?)";
+        var statement = "INSERT INTO user (username, password, email, json) VALUES (?, ?, ?, ?)";
         var json = new Gson().toJson(user);
         var password = BCrypt.hashpw(user.password(), BCrypt.gensalt());
         executeUpdate(statement, user.username(), password, user.email(), json);
@@ -71,5 +66,6 @@ public class SQLUserDAO implements UserDAO {
         var statement = "TRUNCATE user";
         executeUpdate(statement);
     }
+
 
 }
