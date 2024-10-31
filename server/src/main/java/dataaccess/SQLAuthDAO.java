@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.util.UUID;
 
 import static dataaccess.DatabaseManager.executeUpdate;
-import static java.sql.Types.NULL;
 
 public class SQLAuthDAO implements AuthDAO {
 
@@ -59,8 +58,10 @@ public class SQLAuthDAO implements AuthDAO {
 
     @Override
     public void deleteAuth(AuthData auth) throws ResponseException {
-        var statement = "DELETE FROM auth WHERE authToken=?";
-        DatabaseManager.executeUpdate(statement, auth.authToken());
+        if (getAuth(auth) != null) {
+            var statement = "DELETE FROM auth WHERE authToken=?";
+            DatabaseManager.executeUpdate(statement, auth.authToken());
+        } else throw new ResponseException(500, "Auth does not exist");
     }
 
     private AuthData readAuth(ResultSet rs) throws SQLException {
