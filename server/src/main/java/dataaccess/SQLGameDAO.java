@@ -22,16 +22,11 @@ public class SQLGameDAO implements GameDAO {
                 """
             CREATE TABLE IF NOT EXISTS  games (
               `gameID` int NOT NULL AUTO_INCREMENT,
-              `whiteUsername` varchar(256) NOT NULL,
-              `blackUsername` varchar(256) NOT NULL,
+              `whiteUsername` varchar(256),
+              `blackUsername` varchar(256),
               `gameName` varchar(256) NOT NULL,
-              `chessGame` varchar(256) NOT NULL,
-              `json` TEXT DEFAULT NULL,
-              PRIMARY KEY (`gameID`),
-              INDEX(whiteUsername),
-              INDEX(blackUsername),
-              INDEX(gameName),
-              INDEX(chessGame)
+              `json` TEXT NOT NULL,
+              PRIMARY KEY (`gameID`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
             """
         };
@@ -40,21 +35,17 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public GameData createGame(String gameName, AuthData auth) throws ResponseException {
-        var statement = "INSERT INTO games (whiteUsername, blackUsername, gameName, chessGame, json) VALUES (?, ?, ?, ?, ?)";
-        var json = new Gson().toJson(gameName);
+        var statement = "INSERT INTO games (whiteUsername, blackUsername, gameName, json) VALUES (?, ?, ?, ?)";
         var chessGame = new ChessGame();
-        var gameID = executeUpdate(statement, NULL, NULL, gameName, chessGame, json);
-        var game = new GameData(gameID, null, null, gameName, chessGame);
-        var newJson = new Gson().toJson(game);
-        var updateStatement = "UPDATE games SET json = ? WHERE gameID = ?";
-        executeUpdate(updateStatement, newJson, gameID);
-        return game;
+        var json = new Gson().toJson(chessGame);
+        var gameID = executeUpdate(statement, null, null, gameName, json);
+        return new GameData(gameID, null, null, gameName, chessGame);
     }
 
     @Override
     public GameData getGame(int gameID) throws ResponseException {
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT gameID, json FROM games WHERE gameID=?";
+            var statement = "SELECT * FROM games WHERE gameID=?";
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setInt(1, gameID);
                 try (var rs = ps.executeQuery()) {
@@ -71,16 +62,19 @@ public class SQLGameDAO implements GameDAO {
 
     private GameData readGame(ResultSet rs) throws SQLException {
         var gameID = rs.getInt("gameID");
+        var whiteUsername = rs.getString("whiteUsername");
+        var blackUsername = rs.getString("blackUsername");
+        var gameName = rs.getString("gameName");
         var json = rs.getString("json");
-        var game = new Gson().fromJson(json, GameData.class);
-        return game.setId(gameID);
+        var chessGame = new Gson().fromJson(json, ChessGame.class);
+        return new GameData(gameID, whiteUsername, blackUsername, gameName, chessGame);
     }
 
     @Override
     public Collection<GameData> listGames(AuthData auth) throws ResponseException {
         var result = new ArrayList<GameData>();
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT gameID, json FROM games";
+            var statement = "SELECT * FROM games";
             try (var ps = conn.prepareStatement(statement)) {
                 try (var rs = ps.executeQuery()) {
                     while (rs.next()) {
@@ -100,10 +94,10 @@ public class SQLGameDAO implements GameDAO {
         if (game != null) {
             if (Objects.equals(playerColor, "BLACK") && game.blackUsername() == null) {
                 var statement = "UPDATE games SET blackUsername = ? WHERE gameID = ?";
-                executeUpdate(statement, playerColor, gameID);
+                DatabaseManager.executeUpdate(statement, auth.username(), gameID);
             } else if (Objects.equals(playerColor, "WHITE") && game.whiteUsername() == null) {
                 var statement = "UPDATE games SET whiteUsername = ? WHERE gameID = ?";
-                executeUpdate(statement, playerColor, gameID);
+                DatabaseManager.executeUpdate(statement, auth.username(), gameID);
             } else {
                 throw new ResponseException(403, "Error: already taken");
             }

@@ -5,6 +5,7 @@ import dataaccess.SQLUserDAO;
 import exception.ResponseException;
 import model.AuthData;
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class UserService {
     private final SQLUserDAO userAccess = new SQLUserDAO();
@@ -26,11 +27,15 @@ public class UserService {
     }
 
     public AuthData loginUser(UserData user) throws Exception {
-        if (userAccess.getUser(user) == null) {
+        var dbUser = userAccess.getUser(user);
+        if (dbUser == null) {
             throw new ResponseException(401, "Error: unauthorized");
-        } else {
+        } else if (BCrypt.checkpw(user.password(), dbUser.password())) {
             return authAccess.createAuth(user);
+        } else {
+            throw new ResponseException(401, "Error: unauthorized");
         }
+
     }
 
     public void logoutUser(AuthData auth) throws Exception {

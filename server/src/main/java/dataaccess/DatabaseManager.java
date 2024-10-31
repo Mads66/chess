@@ -85,6 +85,8 @@ public class DatabaseManager {
                         ps.setInt(i + 1, p);
                     } else if (param == null) {
                         ps.setNull(i + 1, NULL);
+                    } else {
+                        System.out.println(param);
                     }
                 }
                 ps.executeUpdate();

@@ -195,6 +195,28 @@ public class DataAccessTest {
 
     @Test
     @Order(19)
+    public void joinGame() throws Exception {
+        var original = new UserData("a", "p", "a@a.com");
+        var auth = authDAO.createAuth(original);
+        var game1 = gameDAO.createGame("game1", auth);
+        gameDAO.joinGame(auth, "WHITE", game1.gameID());
+        var newGame = gameDAO.getGame(game1.gameID());
+        assertEquals(auth.username(), newGame.whiteUsername());
+    }
+
+    @Test
+    @Order(20)
+    public void badJoinGame() throws Exception {
+        var original = new UserData("a", "p", "a@a.com");
+        var auth = authDAO.createAuth(original);
+        var game2 = gameDAO.createGame("game2", auth);
+        gameDAO.joinGame(auth, "WHITE", game2.gameID());
+        var newAuth = authDAO.createAuth(original);
+        assertThrows(ResponseException.class, () -> gameDAO.joinGame(newAuth, "WHITE", game2.gameID()));
+    }
+
+    @Test
+    @Order(21)
     public void clearGames() throws Exception {
         gameDAO.createGame("game1", null);
         gameDAO.createGame("game2", null);

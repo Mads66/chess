@@ -19,10 +19,8 @@ public class SQLUserDAO implements UserDAO {
               `username` varchar(256) NOT NULL,
               `password` varchar(256) NOT NULL,
               `email` varchar(256) NOT NULL,
-              `json` TEXT DEFAULT NULL,
-              PRIMARY KEY (`username`),
-              INDEX(password),
-              INDEX(email)
+              `json` TEXT NOT NULL,
+              PRIMARY KEY (`username`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
             """
         };
@@ -32,8 +30,8 @@ public class SQLUserDAO implements UserDAO {
     @Override
     public void createUser(UserData user) throws ResponseException {
         var statement = "INSERT INTO user (username, password, email, json) VALUES (?, ?, ?, ?)";
-        var json = new Gson().toJson(user);
         var password = BCrypt.hashpw(user.password(), BCrypt.gensalt());
+        var json = new Gson().toJson(new UserData(user.username(), password, user.email()));
         executeUpdate(statement, user.username(), password, user.email(), json);
     }
 
