@@ -14,16 +14,9 @@ public class Server {
     private UserService userService;
     private GameService gameService;
 
-    {
-        try {
-            gameService = new GameService();
-            userService = new UserService();
-        } catch (ResponseException e) {
-            Spark.exception(ResponseException.class, this::exceptionHandler);
-        }
-    }
-
-    public Server() {
+    private void initializeServices() throws ResponseException {
+        gameService = new GameService();
+        userService = new UserService();
     }
 
 
@@ -31,6 +24,12 @@ public class Server {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
+
+        try {
+            initializeServices();
+        } catch (ResponseException e) {
+            return -1;
+        }
 
         // Register your endpoints and handle exceptions here.
         Spark.post("/user", this::registerUser);
