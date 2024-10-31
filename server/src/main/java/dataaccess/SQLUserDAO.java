@@ -19,7 +19,6 @@ public class SQLUserDAO implements UserDAO {
               `username` varchar(256) NOT NULL,
               `password` varchar(256) NOT NULL,
               `email` varchar(256) NOT NULL,
-              `json` TEXT NOT NULL,
               PRIMARY KEY (`username`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
             """
@@ -29,16 +28,15 @@ public class SQLUserDAO implements UserDAO {
 
     @Override
     public void createUser(UserData user) throws ResponseException {
-        var statement = "INSERT INTO user (username, password, email, json) VALUES (?, ?, ?, ?)";
+        var statement = "INSERT INTO user (username, password, email) VALUES (?, ?, ?)";
         var password = BCrypt.hashpw(user.password(), BCrypt.gensalt());
-        var json = new Gson().toJson(new UserData(user.username(), password, user.email()));
-        executeUpdate(statement, user.username(), password, user.email(), json);
+        executeUpdate(statement, user.username(), password, user.email());
     }
 
     @Override
     public UserData getUser(UserData user) throws Exception {
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT username, json FROM user WHERE username = ?";
+            var statement = "SELECT * FROM user WHERE username = ?";
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setString(1, user.username());
                 try (var rs = ps.executeQuery()) {
@@ -55,9 +53,9 @@ public class SQLUserDAO implements UserDAO {
 
     private UserData readUser(ResultSet rs) throws SQLException {
         var username = rs.getString("username");
-        var json = rs.getString("json");
-        var user = new Gson().fromJson(json, UserData.class);
-        return user.setId(username);
+        var password = rs.getString("password");
+        var email = rs.getString("email");
+        return new UserData(username, password, email);
     }
 
     public void clear() throws ResponseException {

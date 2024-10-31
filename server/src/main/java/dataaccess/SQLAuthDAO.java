@@ -19,7 +19,6 @@ public class SQLAuthDAO implements AuthDAO {
             CREATE TABLE IF NOT EXISTS  auth (
               `authToken` varchar(256) NOT NULL,
               `username` varchar(256) NOT NULL,
-              `json` TEXT DEFAULT NULL,
               PRIMARY KEY (`authToken`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
             """
@@ -31,16 +30,15 @@ public class SQLAuthDAO implements AuthDAO {
     @Override
     public AuthData createAuth(UserData user) throws ResponseException {
         String auth = UUID.randomUUID().toString();
-        var statement = "INSERT INTO auth (authToken, username, json) VALUES (?, ?, ?)";
-        var json = new Gson().toJson(user);
-        DatabaseManager.executeUpdate(statement, auth, user.username(), json);
+        var statement = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
+        DatabaseManager.executeUpdate(statement, auth, user.username());
         return new AuthData(auth, user.username());
     }
 
     @Override
     public AuthData getAuth(AuthData auth) throws ResponseException {
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT authToken, json FROM auth WHERE authToken = ?";
+            var statement = "SELECT * FROM auth WHERE authToken = ?";
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setString(1, auth.authToken());
                 try (var rs = ps.executeQuery()) {
@@ -67,9 +65,8 @@ public class SQLAuthDAO implements AuthDAO {
 
     private AuthData readAuth(ResultSet rs) throws SQLException {
         var authToken = rs.getString("authToken");
-        var json = rs.getString("json");
-        var auth = new Gson().fromJson(json, AuthData.class);
-        return auth.setId(authToken);
+        var username = rs.getString("username");
+        return new AuthData(authToken, username);
     }
 
     public void clear() throws ResponseException {
