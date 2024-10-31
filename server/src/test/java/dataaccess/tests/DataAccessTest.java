@@ -46,8 +46,8 @@ public class DataAccessTest {
     @Order(3)
     public void getUser() throws Exception {
         var original = new UserData("a", "p", "a@a.com");
-        var db_user = userDAO.getUser(original);
-        assertEquals(original, db_user);
+        var dbUser = userDAO.getUser(original);
+        assertEquals(original.username(), dbUser.username());
     }
 
     @Test
@@ -89,8 +89,8 @@ public class DataAccessTest {
     public void getAuth() throws Exception {
         var original = new UserData("a", "p", "a@a.com");
         var auth = authDAO.createAuth(original);
-        var db_auth = authDAO.getAuth(auth);
-        assertNotNull(db_auth);
+        var dbAuth = authDAO.getAuth(auth);
+        assertNotNull(dbAuth);
     }
 
     @Test

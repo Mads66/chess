@@ -60,7 +60,9 @@ public class SQLAuthDAO implements AuthDAO {
         if (getAuth(auth) != null) {
             var statement = "DELETE FROM auth WHERE authToken=?";
             DatabaseManager.executeUpdate(statement, auth.authToken());
-        } else throw new ResponseException(500, "Auth does not exist");
+        } else {
+            throw new ResponseException(500, "Auth does not exist");
+        }
     }
 
     private AuthData readAuth(ResultSet rs) throws SQLException {
