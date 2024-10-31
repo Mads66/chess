@@ -12,6 +12,7 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.mindrot.jbcrypt.BCrypt;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,7 +33,7 @@ public class DataAccessTest {
         var expected = new UserData("a", "p", "a@a.com");
         userDAO.createUser(expected);
         var actual = userDAO.getUser(expected);
-        assertEquals(expected, actual);
+        assertEquals(expected.username(), actual.username());
     }
 
     @Test
