@@ -8,10 +8,14 @@ import exception.ResponseException;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class DataAccessTest {
     private final SQLUserDAO userDAO = new SQLUserDAO();
     private final SQLGameDAO gameDAO = new SQLGameDAO();
@@ -22,7 +26,9 @@ public class DataAccessTest {
 
 
     @Test
+    @Order(1)
     public void registerUser() throws Exception {
+        userDAO.clear();
         var expected = new UserData("a", "p", "a@a.com");
         userDAO.createUser(expected);
         var actual = userDAO.getUser(expected);
@@ -30,12 +36,14 @@ public class DataAccessTest {
     }
 
     @Test
+    @Order(2)
     public void registerSameUser() {
         var repeat = new UserData("a", "p", "a@a.com");
         assertThrows(ResponseException.class, () -> userDAO.createUser(repeat));
     }
 
     @Test
+    @Order(3)
     public void getUser() throws Exception {
         var original = new UserData("a", "p", "a@a.com");
         var db_user = userDAO.getUser(original);
@@ -43,12 +51,14 @@ public class DataAccessTest {
     }
 
     @Test
+    @Order(4)
     public void badGetUser() throws Exception {
         var notInDatabase = new UserData("imNotReal", "plainAsDay", "fake@person.com");
         assertNull(userDAO.getUser(notInDatabase));
     }
 
     @Test
+    @Order(5)
     public void clearUser() throws Exception {
         userDAO.createUser(new UserData("b", "pass", "b@b.com"));
         userDAO.createUser(new UserData("c", "password", "c@c.com"));
@@ -60,6 +70,7 @@ public class DataAccessTest {
     }
 
     @Test
+    @Order(6)
     public void createAuth() throws Exception {
         var original = new UserData("a", "p", "a@a.com");
         var auth = authDAO.createAuth(original);
@@ -67,12 +78,14 @@ public class DataAccessTest {
     }
 
     @Test
+    @Order(7)
     public void badCreateAuth() {
         var original = new UserData(null, "p", "a@a.com");
         assertThrows(ResponseException.class, () -> authDAO.createAuth(original));
     }
 
     @Test
+    @Order(8)
     public void getAuth() throws Exception {
         var original = new UserData("a", "p", "a@a.com");
         var auth = authDAO.createAuth(original);
@@ -81,12 +94,14 @@ public class DataAccessTest {
     }
 
     @Test
+    @Order(9)
     public void badGetAuth() throws Exception {
         var randomAuth = new AuthData("notanauthtokenindb", "username");
         assertNull(authDAO.getAuth(randomAuth));
     }
 
     @Test
+    @Order(10)
     public void deleteAuth() throws Exception {
         var original = new UserData("a", "p", "a@a.com");
         var auth = authDAO.createAuth(original);
@@ -95,11 +110,13 @@ public class DataAccessTest {
     }
 
     @Test
+    @Order(11)
     public void badDeleteAuth() {
         assertThrows(ResponseException.class, () -> authDAO.deleteAuth(new AuthData("null", "username")));
     }
 
     @Test
+    @Order(12)
     public void clearAuth() throws Exception {
         var original = new UserData("a", "p", "a@a.com");
         var auth1 = authDAO.createAuth(original);
@@ -112,6 +129,7 @@ public class DataAccessTest {
     }
 
     @Test
+    @Order(13)
     public void createGame() throws Exception {
         var original = new UserData("a", "p", "a@a.com");
         var auth = authDAO.createAuth(original);
@@ -121,6 +139,7 @@ public class DataAccessTest {
     }
 
     @Test
+    @Order(14)
     public void badCreateGame() throws ResponseException {
         var original = new UserData("a", "p", "a@a.com");
         var auth = authDAO.createAuth(original);
@@ -128,6 +147,7 @@ public class DataAccessTest {
     }
 
     @Test
+    @Order(15)
     public void getGame() throws Exception {
         var original = new UserData("a", "p", "a@a.com");
         var auth = authDAO.createAuth(original);
@@ -136,11 +156,13 @@ public class DataAccessTest {
     }
 
     @Test
+    @Order(16)
     public void badGetGame() throws Exception {
         assertNull(gameDAO.getGame(1256));
     }
 
     @Test
+    @Order(17)
     public void listGames() throws Exception {
         gameDAO.clear();
         var auth = authDAO.createAuth(new UserData("a", "p", "a@a.com"));
@@ -148,13 +170,14 @@ public class DataAccessTest {
         var game2 = gameDAO.createGame("game2", auth);
         var game3 = gameDAO.createGame("game3", auth);
         var gameList = gameDAO.listGames(auth);
-        assertTrue(gameList.size() == 3);
+        assertEquals(3, gameList.size());
         assertTrue(gameList.contains(game1));
         assertTrue(gameList.contains(game2));
         assertTrue(gameList.contains(game3));
     }
 
     @Test
+    @Order(18)
     public void badListGames() throws Exception {
         gameDAO.clear();
         var auth = authDAO.createAuth(new UserData("a", "p", "a@a.com"));
@@ -171,6 +194,7 @@ public class DataAccessTest {
     }
 
     @Test
+    @Order(19)
     public void clearGames() throws Exception {
         gameDAO.createGame("game1", null);
         gameDAO.createGame("game2", null);
