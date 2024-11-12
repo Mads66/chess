@@ -46,32 +46,32 @@ public class ServerFacade {
         return response;
     }
 
-    public Object registerUser(Request request) throws ResponseException {
+    public Object registerUser(String[] request) throws ResponseException {
         var path = "/user";
         return this.makeRequest("POST", path, request, UserData.class);
     }
 
-    public Object login(Request request) throws ResponseException {
+    public Object login(String[] request) throws ResponseException {
         var path = "/session";
         return this.makeRequest("POST", path, request, AuthData.class);
     }
 
-    public void logout(Request request) throws ResponseException {
+    public void logout(String[] request) throws ResponseException {
         var path = "/session";
         this.makeRequest("DELETE", path, request, null);
     }
 
-    public Object listGames(Request request) throws ResponseException {
+    public Object listGames(String[] request) throws ResponseException {
         var path = "/game";
         return this.makeRequest("GET", path, request, Collection.class);
     }
 
-    public Object createGame(Request request) throws ResponseException {
+    public Object createGame(String[] request) throws ResponseException {
         var path = "/game";
         return this.makeRequest("POST", path, request, GameData.class);
     }
 
-    public Object joinGame(Request request) throws ResponseException {
+    public Object joinGame(String[] request) throws ResponseException {
         var path = "/game";
         return this.makeRequest("PUT", path, request, GameData.class);
     }
