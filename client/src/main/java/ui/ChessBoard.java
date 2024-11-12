@@ -1,31 +1,36 @@
 package ui;
 
+import chess.ChessGame;
+import chess.ChessPiece;
+import chess.ChessPosition;
+
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
+import static chess.ChessPiece.PieceType.*;
+
 public class ChessBoard {
 
+    private static chess.ChessBoard board = new chess.ChessBoard();
     private static final int BOARD_SIZE_IN_SQUARES = 8;
 
-    public static final String WHITE_KING = " ♔ ";
-    public static final String WHITE_QUEEN = " ♕ ";
-    public static final String WHITE_BISHOP = " ♗ ";
-    public static final String WHITE_KNIGHT = " ♘ ";
-    public static final String WHITE_ROOK = " ♖ ";
-    public static final String WHITE_PAWN = " ♙ ";
-    public static final String BLACK_KING = " ♚ ";
-    public static final String BLACK_QUEEN = " ♛ ";
-    public static final String BLACK_BISHOP = " ♝ ";
-    public static final String BLACK_KNIGHT = " ♞ ";
-    public static final String BLACK_ROOK = " ♜ ";
-    public static final String BLACK_PAWN = " ♟ ";
+    public static final String WHITE_KING = " k ";
+    public static final String WHITE_QUEEN = " q ";
+    public static final String WHITE_BISHOP = " b ";
+    public static final String WHITE_KNIGHT = " n ";
+    public static final String WHITE_ROOK = " r ";
+    public static final String WHITE_PAWN = " p ";
+    public static final String BLACK_KING = " K ";
+    public static final String BLACK_QUEEN = " Q ";
+    public static final String BLACK_BISHOP = " B ";
+    public static final String BLACK_KNIGHT = " N ";
+    public static final String BLACK_ROOK = " R ";
+    public static final String BLACK_PAWN = " P ";
     public static final String EMPTY = " \u2003 ";
-
-    private static final String BOLD_TEXT = "\u001B[1m";
-    private static final String RESET_COLOR = "\u001B[0m";
 
     public static void main(String[] args) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
+        board.resetBoard();
 
         System.out.println("White's perspective:");
         drawBoard(out, true); // White's perspective
@@ -38,7 +43,7 @@ public class ChessBoard {
         String[][] board = initializeBoard(isWhitePerspective);
 
         // Print column headers
-        out.print("  ");
+        out.print("   ");
         if (isWhitePerspective) {
             for (char col = 'a'; col <= 'h'; col++) {
                 out.print(" " + col + " ");
@@ -51,33 +56,33 @@ public class ChessBoard {
         out.println();
 
         for (int row = 0; row < BOARD_SIZE_IN_SQUARES; row++) {
-            int displayRow = isWhitePerspective ? (BOARD_SIZE_IN_SQUARES - row) : (row + 1);
+            int displayRow = isWhitePerspective ? (BOARD_SIZE_IN_SQUARES - row - 1) : row;
 
             // Print row number on the left side
-            out.print(displayRow + " ");
+            out.print((BOARD_SIZE_IN_SQUARES - displayRow) + " ");
 
             for (int col = 0; col < BOARD_SIZE_IN_SQUARES; col++) {
                 int displayCol = isWhitePerspective ? col : (BOARD_SIZE_IN_SQUARES - col - 1);
 
                 // Alternate square colors
-                if ((row + displayCol) % 2 == 0) {
+                if ((displayRow + displayCol) % 2 == 0) {
                     setWhite(out);
                 } else {
                     setBlack(out);
                 }
 
                 // Print piece with color based on whether it's black or white
-                out.print(getColoredPiece(board[BOARD_SIZE_IN_SQUARES - displayRow][displayCol]));
+                out.print(board[displayRow][displayCol]);
                 resetColor(out);
             }
 
             // Print row number on the right side
-            out.print(" " + displayRow);
+            out.print(" " + (BOARD_SIZE_IN_SQUARES - displayRow));
             out.println();
         }
 
         // Print column headers again at the bottom
-        out.print("  ");
+        out.print("   ");
         if (isWhitePerspective) {
             for (char col = 'a'; col <= 'h'; col++) {
                 out.print(" " + col + " ");
@@ -91,49 +96,32 @@ public class ChessBoard {
     }
 
     private static String[][] initializeBoard(boolean isWhitePerspective) {
-        String[][] board = new String[BOARD_SIZE_IN_SQUARES][BOARD_SIZE_IN_SQUARES];
+        String[][] consoleBoard = new String[BOARD_SIZE_IN_SQUARES][BOARD_SIZE_IN_SQUARES];
 
-        if (isWhitePerspective) {
-            // White pieces at the bottom, black pieces at the top
-            board[0] = new String[]{BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP,
-                    BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK};
-            board[1] = new String[]{BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN,
-                    BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN};
-
-            board[6] = new String[]{WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN,
-                    WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN};
-            board[7] = new String[]{WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP,
-                    WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK};
-        } else {
-            // Black pieces at the bottom, white pieces at the top
-            board[0] = new String[]{WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP,
-                    WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK};
-            board[1] = new String[]{WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN,
-                    WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN};
-
-            board[6] = new String[]{BLACK_PAWN, BLACK_PAWN, BLACK_PAWN,
-                    BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN};
-            board[7] = new String[]{BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP,
-                    BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK};
-        }
-
-        // Fill empty squares
-        for (int row = 2; row < 6; row++) {
+        for (int row = 0; row < BOARD_SIZE_IN_SQUARES; row++) {
             for (int col = 0; col < BOARD_SIZE_IN_SQUARES; col++) {
-                board[row][col] = EMPTY;
+                int displayRow = isWhitePerspective ? row : (BOARD_SIZE_IN_SQUARES - row-1);
+                int displayCol = isWhitePerspective ? col : (BOARD_SIZE_IN_SQUARES - col-1);
+
+                ChessPosition position = new ChessPosition(displayRow+1,displayCol+1);
+                ChessPiece piece = board.getPiece(position);
+                consoleBoard[displayRow][displayCol] = getPieceSymbol(piece);
             }
         }
 
-        return board;
+        return consoleBoard;
     }
 
-    private static String getColoredPiece(String piece) {
-        if (piece.contains("♔") || piece.contains("♕") || piece.contains("♗") || piece.contains("♘") || piece.contains("♖") || piece.contains("♙")) {
-            return BOLD_TEXT + piece + RESET_COLOR;
-        } else if (piece.contains("♚") || piece.contains("♛") || piece.contains("♝") || piece.contains("♞") || piece.contains("♜") || piece.contains("♟")) {
-            return BOLD_TEXT +  piece + RESET_COLOR;
-        } else {
-            return piece;
+    private static String getPieceSymbol(ChessPiece piece) {
+        if (piece == null) return EMPTY;
+        switch (piece.getPieceType()) {
+            case KING: return piece.getTeamColor() == ChessGame.TeamColor.WHITE ? WHITE_KING : BLACK_KING;
+            case QUEEN: return piece.getTeamColor() == ChessGame.TeamColor.WHITE ? WHITE_QUEEN : BLACK_QUEEN;
+            case BISHOP: return piece.getTeamColor() == ChessGame.TeamColor.WHITE ? WHITE_BISHOP : BLACK_BISHOP;
+            case KNIGHT: return piece.getTeamColor() == ChessGame.TeamColor.WHITE ? WHITE_KNIGHT : BLACK_KNIGHT;
+            case ROOK: return piece.getTeamColor() == ChessGame.TeamColor.WHITE ? WHITE_ROOK : BLACK_ROOK;
+            case PAWN: return piece.getTeamColor() == ChessGame.TeamColor.WHITE ? WHITE_PAWN : BLACK_PAWN;
+            default: return EMPTY;
         }
     }
 
