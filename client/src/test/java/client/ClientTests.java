@@ -7,6 +7,6 @@ public class ClientTests {
     private final ChessClient client;
 
     public ClientTests() {
-        this.client = new ChessClient("http://localhost:8080", NotificationHandler);
+        this.client = new ChessClient("http://localhost:8080");
     }
 }

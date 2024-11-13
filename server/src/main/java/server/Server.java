@@ -20,16 +20,12 @@ public class Server {
     }
 
 
-    public int run(int desiredPort) {
+    public int run(int desiredPort) throws ResponseException {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
 
-        try {
-            initializeServices();
-        } catch (ResponseException e) {
-            return -1;
-        }
+        initializeServices();
 
         // Register your endpoints and handle exceptions here.
         Spark.post("/user", this::registerUser);
@@ -41,9 +37,6 @@ public class Server {
         Spark.put("/game", this::joinGame);
         Spark.exception(ResponseException.class, this::exceptionHandler);
 
-
-        //This line initializes the server and can be removed once you have a functioning endpoint
-        Spark.init();
 
         Spark.awaitInitialization();
         return Spark.port();

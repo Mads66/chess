@@ -34,6 +34,7 @@ public class ChessClient {
                 case "create" -> createGame(params);
                 case "list" -> listGames(params);
                 case "observe" -> observeGame(params);
+                case "quit" -> "quit";
                 default -> help();
             };
         } catch (ResponseException e){
@@ -44,7 +45,7 @@ public class ChessClient {
     public String register(String... params) throws ResponseException {
         if (params.length == 3) {
             var user = new UserData(params[0],params[1],params[2]);
-            var response = server.registerUser(user);
+            authData =  server.registerUser(user);
             state = State.LOGGEDIN;
             return String.format("You successfully registered and logged in as %s", params[0]);
         }
@@ -54,7 +55,7 @@ public class ChessClient {
     public String login(String... params) throws ResponseException {
         if (params.length == 2) {
             var user = new LoginUser(params[0],params[1]);
-            var response = server.login(user);
+            authData = server.login(user);
             state = State.LOGGEDIN;
             return String.format("You successfully logged in as %s", params[0]);
         }
@@ -72,7 +73,7 @@ public class ChessClient {
     public String joinGame(String... params) throws ResponseException {
         assertSignedIn();
         if (params.length == 2) {
-            server.joinGame(String.join(" ", params));
+            server.joinGame(authData.authToken(), String.join(" ", params));
             return String.format("You successfully joined game %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <gameID> <BLACK|WHITE>");
@@ -81,7 +82,7 @@ public class ChessClient {
     public String createGame(String... params) throws ResponseException {
         assertSignedIn();
         if (params.length == 1) {
-            server.createGame(String.join(" ", params));
+            server.createGame(authData.authToken(), String.join(" ", params));
             return String.format("You successfully created game %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <gameName>");
@@ -89,7 +90,7 @@ public class ChessClient {
 
     public String listGames(String... params) throws ResponseException {
         assertSignedIn();
-        return server.listGames(String.join(" ", params)).toString();
+        return server.listGames(authData.authToken()).toString();
     }
 
     public String observeGame(String... params) throws ResponseException {

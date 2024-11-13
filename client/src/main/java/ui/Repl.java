@@ -27,7 +27,9 @@ public class Repl {
 
             try {
                 result = client.eval(line);
-                System.out.print(result);
+                if (!result.equals("quit")) {
+                    System.out.print(result);
+                }
             } catch (Throwable e) {
                 var msg = e.toString();
                 System.out.print(msg);
