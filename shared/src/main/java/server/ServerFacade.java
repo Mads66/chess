@@ -35,7 +35,7 @@ public class ServerFacade {
 
     private static void writeHeader(Object request, HttpURLConnection http) throws IOException {
         if (request != null) {
-            http.addRequestProperty("Content-Type", "application/json");
+            http.setRequestProperty("Authorization", "<tokenString>");
         }
     }
 
