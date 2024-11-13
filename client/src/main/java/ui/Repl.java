@@ -9,11 +9,11 @@ import java.util.Scanner;
 import static java.awt.Color.*;
 import static org.glassfish.grizzly.Interceptor.RESET;
 
-public class Repl implements NotificationHandler {
+public class Repl {
     private final ChessClient client;
 
     public Repl(String serverURL) {
-        client = new ChessClient(serverURL, this);
+        client = new ChessClient(serverURL);
     }
 
     public void run() {
@@ -27,24 +27,23 @@ public class Repl implements NotificationHandler {
 
             try {
                 result = client.eval(line);
-                System.out.print(BLUE + result);
+                System.out.print(result);
             } catch (Throwable e) {
                 var msg = e.toString();
                 System.out.print(msg);
             }
         }
-        System.out.println();
+        stop(scanner);
 
     }
 
-    @Override
-    public HandlerResult handleNotification(Notification notification, Object attachment) {
-        System.out.println(RED + notification.toString());
-        printPrompt();
-        return null;
+    private static void stop(Scanner scanner) {
+        scanner.close();
+        System.out.println("Goodbye!");
+        System.exit(0);
     }
 
     private void printPrompt() {
-        System.out.print("\n" + RESET + ">>> " + GREEN);
+        System.out.print("\n>>> ");
     }
 }

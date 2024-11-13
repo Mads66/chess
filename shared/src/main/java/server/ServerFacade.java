@@ -33,6 +33,12 @@ public class ServerFacade {
         }
     }
 
+    private static void writeHeader(Object request, HttpURLConnection http) throws IOException {
+        if (request != null) {
+            http.addRequestProperty("Content-Type", "application/json");
+        }
+    }
+
     private static <T> T readBody(HttpURLConnection http, Class<T> responseClass) throws IOException {
         T response = null;
         if (http.getContentLength() < 0) {
@@ -46,32 +52,32 @@ public class ServerFacade {
         return response;
     }
 
-    public Object registerUser(String[] request) throws ResponseException {
+    public Object registerUser(Object request) throws ResponseException {
         var path = "/user";
         return this.makeRequest("POST", path, request, UserData.class);
     }
 
-    public Object login(String[] request) throws ResponseException {
+    public Object login(Object request) throws ResponseException {
         var path = "/session";
         return this.makeRequest("POST", path, request, AuthData.class);
     }
 
-    public void logout(String[] request) throws ResponseException {
+    public void logout(Object request) throws ResponseException {
         var path = "/session";
         this.makeRequest("DELETE", path, request, null);
     }
 
-    public Object listGames(String[] request) throws ResponseException {
+    public Object listGames(Object request) throws ResponseException {
         var path = "/game";
         return this.makeRequest("GET", path, request, Collection.class);
     }
 
-    public Object createGame(String[] request) throws ResponseException {
+    public Object createGame(Object request) throws ResponseException {
         var path = "/game";
         return this.makeRequest("POST", path, request, GameData.class);
     }
 
-    public Object joinGame(String[] request) throws ResponseException {
+    public Object joinGame(Object request) throws ResponseException {
         var path = "/game";
         return this.makeRequest("PUT", path, request, GameData.class);
     }
@@ -79,18 +85,35 @@ public class ServerFacade {
 
 
     private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass) throws ResponseException {
+        HttpURLConnection http = null;
         try {
             URL url = (new URI(serverUrl + path)).toURL();
-            HttpURLConnection http = (HttpURLConnection) url.openConnection();
+            http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
-            http.setDoOutput(true);
 
-            writeBody(request, http);
+            if ("POST".equals(method) || "PUT".equals(method)) {
+                http.setDoOutput(true);
+                writeBody(request, http);
+            }
+
+            if ("DELETE".equals(method)) {
+                http.setDoOutput(true);
+                writeHeader(request, http);
+            }
+
             http.connect();
             throwIfNotSuccessful(http);
             return readBody(http, responseClass);
+        } catch (IOException ex) {
+            System.err.println("Connection error: " + ex.getMessage());
+            throw new ResponseException(500, "Connection error: " + ex.getMessage());
         } catch (Exception ex) {
+            System.err.println("Error making request: " + ex.getMessage());
             throw new ResponseException(500, ex.getMessage());
+        } finally {
+            if (http != null) {
+                http.disconnect();
+            }
         }
     }
 

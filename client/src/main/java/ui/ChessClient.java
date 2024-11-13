@@ -3,20 +3,22 @@ package ui;
 import com.sun.nio.sctp.NotificationHandler;
 import exception.ResponseException;
 import jdk.jshell.spi.ExecutionControl;
+import model.AuthData;
+import model.LoginUser;
+import model.UserData;
 import server.ServerFacade;
 
 import java.util.Arrays;
+import java.util.Map;
 
 public class ChessClient {
     private final ServerFacade server;
-    private final String serverUrl;
-    private final NotificationHandler notificationHandler;
     private State state = State.LOGGEDOUT;
+    private AuthData authData;
 
-    public ChessClient(String serverUrl, NotificationHandler notificationHandler) {
+    public ChessClient(String serverUrl) {
         server = new ServerFacade(serverUrl);
-        this.serverUrl = serverUrl;
-        this.notificationHandler = notificationHandler;
+        this.authData = null;
     }
 
     public String eval(String input) {
@@ -41,8 +43,9 @@ public class ChessClient {
 
     public String register(String... params) throws ResponseException {
         if (params.length == 3) {
+            var user = new UserData(params[0],params[1],params[2]);
+            var response = server.registerUser(user);
             state = State.LOGGEDIN;
-            server.registerUser(params);
             return String.format("You successfully registered and logged in as %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <username> <password> <email>");
@@ -50,8 +53,9 @@ public class ChessClient {
 
     public String login(String... params) throws ResponseException {
         if (params.length == 2) {
+            var user = new LoginUser(params[0],params[1]);
+            var response = server.login(user);
             state = State.LOGGEDIN;
-            server.login(params);
             return String.format("You successfully logged in as %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <username> <password>");
@@ -60,14 +64,15 @@ public class ChessClient {
     public String logout(String... params) throws ResponseException {
         assertSignedIn();
         state = State.LOGGEDOUT;
-        server.logout(params);
+        server.logout(authData.authToken());
+        authData = null;
         return "You successfully logged out";
     }
 
     public String joinGame(String... params) throws ResponseException {
         assertSignedIn();
         if (params.length == 2) {
-            server.joinGame(params);
+            server.joinGame(String.join(" ", params));
             return String.format("You successfully joined game %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <gameID> <BLACK|WHITE>");
@@ -76,7 +81,7 @@ public class ChessClient {
     public String createGame(String... params) throws ResponseException {
         assertSignedIn();
         if (params.length == 1) {
-            server.createGame(params);
+            server.createGame(String.join(" ", params));
             return String.format("You successfully created game %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <gameName>");
@@ -84,7 +89,7 @@ public class ChessClient {
 
     public String listGames(String... params) throws ResponseException {
         assertSignedIn();
-        return server.listGames(params).toString();
+        return server.listGames(String.join(" ", params)).toString();
     }
 
     public String observeGame(String... params) throws ResponseException {
@@ -102,6 +107,7 @@ public class ChessClient {
                     """;
         }
         return """
+                \n
                 create <NAME> - a game
                 list - games
                 join <ID> [WHITE|BLACK] - join a game
