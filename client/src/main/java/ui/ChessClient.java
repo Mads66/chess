@@ -70,6 +70,7 @@ public class ChessClient {
         if (params.length == 2) {
             JoinGameRequest join = new JoinGameRequest(Integer.parseInt(params[0]),params[1]);
             var game = server.joinGame(authData.authToken(), join);
+            ChessBoard.main(params);
             return String.format("You successfully joined game %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <gameID> <BLACK|WHITE>");
@@ -95,6 +96,7 @@ public class ChessClient {
         if (params.length == 1) {
             JoinGameRequest join = new JoinGameRequest(Integer.parseInt(params[0]),null);
             var game = server.observeGame(authData.authToken(), join);
+            ChessBoard.main(params);
             return String.format("You are successfully observing game %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <gameID>");

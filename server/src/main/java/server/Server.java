@@ -64,7 +64,7 @@ public class Server {
         var game = gameService.joinGame(auth, gameData.playerColor(), gameData.gameID(), userService);
         response.status(200);
         response.type("application/json");
-        return String.format("{%s}", game);
+        return new Gson().toJson(game);
     }
 
     private AuthData headerHandler(Request request) {

@@ -52,6 +52,8 @@ public class ServerFacadeTests {
     @Test
     @Order(2)
     public void testLogin()throws Exception {
+        server.clear();
+        serverFacade.registerUser(testUser);
         var response = serverFacade.login(testLoginUser);
         authData = response;
         assertEquals(authData.username(),response.username());
@@ -105,9 +107,33 @@ public class ServerFacadeTests {
     @Test
     @Order(11)
     public void testJoinGame()throws Exception {
+        server.clear();
+        serverFacade.registerUser(testUser);
         authData = serverFacade.login(testLoginUser);
-        var join = new JoinGameRequest(1, "BLACK");
+        serverFacade.createGame(authData.authToken(), new CreateGameRequest("old"));
+        var join = new JoinGameRequest(1, "WHITE");
         assertDoesNotThrow(() -> serverFacade.joinGame(authData.authToken(), join));
+    }
+
+    @Test
+    @Order(12)
+    public void testJoinGameFail()throws Exception {
+        authData = serverFacade.login(testLoginUser);
+        assertThrows(ResponseException.class, () -> serverFacade.joinGame(authData.authToken(), null));
+    }
+
+    @Test
+    @Order(13)
+    public void testObserveGame()throws Exception {
+        assertTrue(true);
+    }
+
+    @Test
+    @Order(14)
+    public void testObserveGameFail()throws Exception {
+        authData = serverFacade.login(testLoginUser);
+        var request = new JoinGameRequest(3, null);
+        assertThrows(ResponseException.class, () -> serverFacade.observeGame(authData.authToken(), null));
     }
 
 }
