@@ -28,7 +28,7 @@ public class GameService {
             throw new ResponseException(401, "Error: unauthorized");
         }
         if (gameName == null) {
-            throw new ResponseException(400, "Error: bad request");
+            throw new ResponseException(400, "Error: bad request, please input a name");
         } else {
             return gameAccess.createGame(gameName, authCheck);
         }
@@ -39,15 +39,15 @@ public class GameService {
         if (authCheck == null) {
             throw new ResponseException(401, "Error: unauthorized");
         } else if (gameId <= 0) {
-            throw new ResponseException(400, "Error: bad request");
+            throw new ResponseException(400, "Error: bad request, pick a gameID from the list of games");
+        } else if (playerColor == null) {
+            return gameAccess.getGame(gameId);
         } else if (playerColor.equals("BLACK") || playerColor.equals("WHITE")) {
             gameAccess.joinGame(authCheck, playerColor, gameId);
-        } else if (playerColor.equals(null)) {
             return gameAccess.getGame(gameId);
         }else {
-            throw new ResponseException(400, "Error: bad request");
+            throw new ResponseException(400, "Error: bad request, pick either Black or White");
         }
-        return null;
     }
 
     public void clear() throws ResponseException {

@@ -83,7 +83,7 @@ public class ServerFacade {
 
     public GameData observeGame(String header, Object request) throws ResponseException {
         var path = "/game";
-        return this.makeRequest("POST", path, header, request, GameData.class);
+        return this.makeRequest("PUT", path, header, request, GameData.class);
     }
 
 
