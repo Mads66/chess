@@ -28,13 +28,14 @@ public class DatabaseTests {
         int port;
         try {
             port = server.run(0);
+            System.out.println("Started test HTTP server on " + port);
+
+            serverFacade = new TestServerFacade("localhost", Integer.toString(port));
         } catch (Exception exception) {
-            return;
+            stopServer();
         }
 
-        System.out.println("Started test HTTP server on " + port);
 
-        serverFacade = new TestServerFacade("localhost", Integer.toString(port));
     }
 
     @BeforeEach
