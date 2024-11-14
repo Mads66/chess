@@ -5,6 +5,7 @@ import model.*;
 import server.ServerFacade;
 
 import java.util.Arrays;
+import java.util.StringJoiner;
 
 public class ChessClient {
     private final ServerFacade server;
@@ -68,7 +69,12 @@ public class ChessClient {
     public String joinGame(String... params) throws ResponseException {
         assertSignedIn();
         if (params.length == 2) {
-            JoinGameRequest join = new JoinGameRequest(Integer.parseInt(params[0]),params[1]);
+            JoinGameRequest join;
+            try {
+                join = new JoinGameRequest(Integer.parseInt(params[0]), params[1].toUpperCase());
+            } catch (NumberFormatException e) {
+                return "Please select a number from the list of games.";
+            }
             var game = server.joinGame(authData.authToken(), join);
             ChessBoard.main(params);
             return String.format("You successfully joined game %s", params[0]);
@@ -78,8 +84,8 @@ public class ChessClient {
 
     public String createGame(String... params) throws ResponseException {
         assertSignedIn();
-        if (params.length == 1) {
-            CreateGameRequest game = new CreateGameRequest(params[0]);
+        if (params.length >= 1) {
+            CreateGameRequest game = new CreateGameRequest(String.join(" ", params));
             server.createGame(authData.authToken(), game);
             return String.format("You successfully created game %s", params[0]);
         }
