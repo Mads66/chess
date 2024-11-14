@@ -1,5 +1,6 @@
 package server;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
 import exception.ResponseException;
 import model.AuthData;
@@ -83,7 +84,8 @@ public class ServerFacade {
 
     public GameData observeGame(String header, Object request) throws ResponseException {
         var path = "/game";
-        return this.makeRequest("PUT", path, header, request, GameData.class);
+        return new GameData(1234,null,null,"fakeGame", new ChessGame());
+//        return this.makeRequest("PUT", path, header, request, GameData.class);
     }
 
 
