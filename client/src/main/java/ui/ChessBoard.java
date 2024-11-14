@@ -113,7 +113,7 @@ public class ChessBoard {
     }
 
     private static String getPieceSymbol(ChessPiece piece) {
-        if (piece == null) return EMPTY;
+        if (piece == null) {return EMPTY;}
         switch (piece.getPieceType()) {
             case KING: return piece.getTeamColor() == ChessGame.TeamColor.WHITE ? WHITE_KING : BLACK_KING;
             case QUEEN: return piece.getTeamColor() == ChessGame.TeamColor.WHITE ? WHITE_QUEEN : BLACK_QUEEN;

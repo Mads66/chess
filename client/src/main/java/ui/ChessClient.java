@@ -5,7 +5,6 @@ import model.*;
 import server.ServerFacade;
 
 import java.util.Arrays;
-import java.util.StringJoiner;
 
 public class ChessClient {
     private final ServerFacade server;
@@ -101,13 +100,6 @@ public class ChessClient {
     public String observeGame(String... params) throws ResponseException {
         assertSignedIn();
         if (params.length == 1) {
-//            JoinGameRequest join;
-//            try {
-//                join = new JoinGameRequest(Integer.parseInt(params[0]), null);
-//            } catch (NumberFormatException e) {
-//                return "Please select a number from the list of games.";
-//            }
-//            var game = server.observeGame(authData.authToken(), join);
             ChessBoard.main(params);
             return String.format("You are successfully observing the game %s", params[0]);
         }
