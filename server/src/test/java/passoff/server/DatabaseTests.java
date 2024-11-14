@@ -25,7 +25,13 @@ public class DatabaseTests {
     @BeforeAll
     public static void startServer() throws ResponseException {
         server = new Server();
-        var port = server.run(0);
+        int port;
+        try {
+            port = server.run(0);
+        } catch (Exception exception) {
+            return;
+        }
+
         System.out.println("Started test HTTP server on " + port);
 
         serverFacade = new TestServerFacade("localhost", Integer.toString(port));
