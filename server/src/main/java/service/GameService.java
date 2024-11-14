@@ -47,6 +47,7 @@ public class GameService {
         }else {
             throw new ResponseException(400, "Error: bad request");
         }
+        return null;
     }
 
     public void clear() throws ResponseException {
