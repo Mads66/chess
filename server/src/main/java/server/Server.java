@@ -61,10 +61,10 @@ public class Server {
     private Object joinGame(Request request, Response response) throws Exception {
         AuthData auth = headerHandler(request);
         var gameData = new Gson().fromJson(request.body(), JoinGameRequest.class);
-        gameService.joinGame(auth, gameData.playerColor(), gameData.gameID(), userService);
+        var game = gameService.joinGame(auth, gameData.playerColor(), gameData.gameID(), userService);
         response.status(200);
         response.type("application/json");
-        return "{}";
+        return String.format("{%s}", game);
     }
 
     private AuthData headerHandler(Request request) {
