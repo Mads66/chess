@@ -40,9 +40,7 @@ public class GameService {
             throw new ResponseException(401, "Error: unauthorized");
         } else if (gameId <= 0) {
             throw new ResponseException(400, "Error: bad request, pick a gameID from the list of games");
-        } else if (playerColor == null) {
-            return gameAccess.getGame(gameId);
-        } else if (playerColor.equals("BLACK") || playerColor.equals("WHITE")) {
+        } else if (playerColor != null &&(playerColor.equals("BLACK") || playerColor.equals("WHITE"))) {
             gameAccess.joinGame(authCheck, playerColor, gameId);
             return gameAccess.getGame(gameId);
         }else {

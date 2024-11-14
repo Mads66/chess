@@ -3,6 +3,7 @@ package service.tests;
 import exception.ResponseException;
 import model.AuthData;
 import model.UserData;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import service.GameService;
 import service.UserService;
@@ -10,6 +11,14 @@ import service.UserService;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ServiceTests {
+    @BeforeEach
+    public void init() throws ResponseException {
+        var userService = new UserService();
+        var gameService = new GameService();
+        userService.clear();
+        gameService.clear();
+    }
+
     @Test
     public void registerUser() throws Exception {
         var service = new UserService();
@@ -125,7 +134,7 @@ public class ServiceTests {
         service.createGame("AwesomeGame", registered, userService);
         service.createGame("AwesomeGame2", registered, userService);
         service.createGame("AwesomeGame3", registered, userService);
-        service.joinGame(registered, "BLACK", 1235, userService);
+        service.joinGame(registered, "BLACK", 1, userService);
         var list = service.listGames(registered, userService);
         assertEquals(list.size(), 3);
     }
