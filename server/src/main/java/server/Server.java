@@ -25,12 +25,16 @@ public class Server {
     }
 
 
-    public int run(int desiredPort) throws ResponseException {
+    public int run(int desiredPort) {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
 
-        initializeServices();
+        try{
+            initializeServices();
+        }catch (Exception e){
+            return -1;
+        }
 
         // Register your endpoints and handle exceptions here.
         Spark.post("/user", this::registerUser);
