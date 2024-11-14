@@ -19,6 +19,11 @@ public class Server {
         userService = new UserService();
     }
 
+    public void clear() throws ResponseException {
+        gameService.clear();
+        userService.clear();
+    }
+
 
     public int run(int desiredPort) throws ResponseException {
         Spark.port(desiredPort);
