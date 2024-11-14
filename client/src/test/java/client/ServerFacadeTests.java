@@ -136,9 +136,11 @@ public class ServerFacadeTests {
     @Test
     @Order(14)
     public void testObserveGameFail()throws Exception {
+        server.clear();
+        serverFacade.registerUser(testUser);
         authData = serverFacade.login(testLoginUser);
-        var request = new JoinGameRequest(3, null);
-        assertThrows(ResponseException.class, () -> serverFacade.observeGame(authData.authToken(), null));
+        var request = new JoinGameRequest(-1, null);
+        assertThrows(ResponseException.class, () -> serverFacade.observeGame(authData.authToken(), request));
     }
 
 }
