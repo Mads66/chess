@@ -99,7 +99,7 @@ public class SQLGameDAO implements GameDAO {
                 var statement = "UPDATE games SET whiteUsername = ? WHERE gameID = ?";
                 DatabaseManager.executeUpdate(statement, auth.username(), gameID);
             } else {
-                throw new ResponseException(403, "Error: already taken");
+                throw new ResponseException(403, "Error: position already taken");
             }
         } else {
             throw new ResponseException(400, "Error: bad request");
