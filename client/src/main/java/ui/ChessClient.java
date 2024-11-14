@@ -88,7 +88,7 @@ public class ChessClient {
             var gameName = String.join(" ", params);
             CreateGameRequest game = new CreateGameRequest(gameName);
             server.createGame(authData.authToken(), game);
-            return String.format("You successfully created game %s", gameName);
+            return String.format("You successfully created the game %s", gameName);
         }
         throw new ResponseException(400, "Expected: <gameName>");
     }
@@ -101,10 +101,15 @@ public class ChessClient {
     public String observeGame(String... params) throws ResponseException {
         assertSignedIn();
         if (params.length == 1) {
-            JoinGameRequest join = new JoinGameRequest(Integer.parseInt(params[0]),null);
-            var game = server.observeGame(authData.authToken(), join);
+//            JoinGameRequest join;
+//            try {
+//                join = new JoinGameRequest(Integer.parseInt(params[0]), null);
+//            } catch (NumberFormatException e) {
+//                return "Please select a number from the list of games.";
+//            }
+//            var game = server.observeGame(authData.authToken(), join);
             ChessBoard.main(params);
-            return String.format("You are successfully observing game %s", params[0]);
+            return String.format("You are successfully observing the game %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <gameID>");
     }
