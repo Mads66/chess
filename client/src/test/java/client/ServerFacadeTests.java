@@ -1,10 +1,7 @@
 package client;
 
 import exception.ResponseException;
-import model.AuthData;
-import model.CreateGameRequest;
-import model.LoginUser;
-import model.UserData;
+import model.*;
 import org.junit.jupiter.api.*;
 import server.Server;
 import server.ServerFacade;
@@ -26,7 +23,7 @@ public class ServerFacadeTests {
         server = new Server();
         var port = server.run(0);
         System.out.println("Started test HTTP server on " + port);
-        serverFacade = new ServerFacade("http://localhost:0");
+        serverFacade = new ServerFacade("http://localhost:"+port);
     }
 
     @AfterAll
@@ -45,14 +42,15 @@ public class ServerFacadeTests {
     }
 
     @Test
-    @Order(2)
+    @Order(3)
     public void testLogout()throws Exception {
+        authData = serverFacade.login(testLoginUser);
         assertDoesNotThrow(() -> serverFacade.logout(authData.authToken()));
         authData = null;
     }
 
     @Test
-    @Order(3)
+    @Order(2)
     public void testLogin()throws Exception {
         var response = serverFacade.login(testLoginUser);
         authData = response;
@@ -80,6 +78,7 @@ public class ServerFacadeTests {
     @Test
     @Order(7)
     public void testCreateGame()throws Exception {
+        authData = serverFacade.login(testLoginUser);
         assertDoesNotThrow(() -> serverFacade.createGame(authData.authToken(), createGameRequest));
     }
 
@@ -88,6 +87,27 @@ public class ServerFacadeTests {
     public void testCreateGameFail()throws Exception {
         assertThrows(ResponseException.class, () -> serverFacade.createGame(null, null));
 
+    }
+
+    @Test
+    @Order(9)
+    public void testListGames()throws Exception {
+        authData = serverFacade.login(testLoginUser);
+        assertDoesNotThrow(() -> serverFacade.listGames(authData.authToken()));
+    }
+
+    @Test
+    @Order(10)
+    public void testListGamesFail()throws Exception {
+        assertThrows(ResponseException.class, () -> serverFacade.listGames(null));
+    }
+
+    @Test
+    @Order(11)
+    public void testJoinGame()throws Exception {
+        authData = serverFacade.login(testLoginUser);
+        var join = new JoinGameRequest(1, "BLACK");
+        assertDoesNotThrow(() -> serverFacade.joinGame(authData.authToken(), join));
     }
 
 }
