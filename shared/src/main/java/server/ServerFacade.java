@@ -1,12 +1,10 @@
 package server;
 
 import com.google.gson.Gson;
-import com.sun.net.httpserver.Request;
 import exception.ResponseException;
 import model.AuthData;
 import model.GameData;
 import model.ListGameResponse;
-import model.UserData;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +14,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Map;
 
 public class ServerFacade {
     private final String serverUrl;
@@ -109,6 +108,8 @@ public class ServerFacade {
         } catch (IOException ex) {
             System.err.println("Connection error: " + ex.getMessage());
             throw new ResponseException(500, "Connection error: " + ex.getMessage());
+        } catch (ResponseException ex) {
+            throw ex;
         } catch (Exception ex) {
             System.err.println("Error making request: " + ex.getMessage());
             throw new ResponseException(500, ex.getMessage());
@@ -120,9 +121,15 @@ public class ServerFacade {
     }
 
     private void throwIfNotSuccessful(HttpURLConnection http) throws IOException, ResponseException {
-        var status = http.getResponseCode();
+        int status = http.getResponseCode();
         if (!isSuccessful(status)) {
-            throw new ResponseException(status, "failure: " + status);
+            // Read the error stream to get the response body with the error message
+            try (InputStream errorStream = http.getErrorStream()) {
+                InputStreamReader reader = new InputStreamReader(errorStream);
+                Map<String, String> errorResponse = new Gson().fromJson(reader, Map.class);
+                String errorMessage = errorResponse.getOrDefault("message", "Unknown error");
+                throw new ResponseException(status, errorMessage);
+            }
         }
     }
 

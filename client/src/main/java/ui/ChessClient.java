@@ -1,15 +1,10 @@
 package ui;
 
-import com.sun.nio.sctp.NotificationHandler;
 import exception.ResponseException;
-import jdk.jshell.spi.ExecutionControl;
-import model.AuthData;
-import model.LoginUser;
-import model.UserData;
+import model.*;
 import server.ServerFacade;
 
 import java.util.Arrays;
-import java.util.Map;
 
 public class ChessClient {
     private final ServerFacade server;
@@ -45,7 +40,7 @@ public class ChessClient {
     public String register(String... params) throws ResponseException {
         if (params.length == 3) {
             var user = new UserData(params[0],params[1],params[2]);
-            authData =  server.registerUser(user);
+            this.authData =  server.registerUser(user);
             state = State.LOGGEDIN;
             return String.format("You successfully registered and logged in as %s", params[0]);
         }
@@ -55,7 +50,7 @@ public class ChessClient {
     public String login(String... params) throws ResponseException {
         if (params.length == 2) {
             var user = new LoginUser(params[0],params[1]);
-            authData = server.login(user);
+            this.authData = server.login(user);
             state = State.LOGGEDIN;
             return String.format("You successfully logged in as %s", params[0]);
         }
@@ -73,7 +68,8 @@ public class ChessClient {
     public String joinGame(String... params) throws ResponseException {
         assertSignedIn();
         if (params.length == 2) {
-            server.joinGame(authData.authToken(), String.join(" ", params));
+            JoinGameRequest join = new JoinGameRequest(params[0],Integer.parseInt(params[1]));
+            server.joinGame(authData.authToken(), join);
             return String.format("You successfully joined game %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <gameID> <BLACK|WHITE>");
@@ -82,7 +78,8 @@ public class ChessClient {
     public String createGame(String... params) throws ResponseException {
         assertSignedIn();
         if (params.length == 1) {
-            server.createGame(authData.authToken(), String.join(" ", params));
+            CreateGameRequest game = new CreateGameRequest(params[0]);
+            server.createGame(authData.authToken(), game);
             return String.format("You successfully created game %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <gameName>");
@@ -108,7 +105,6 @@ public class ChessClient {
                     """;
         }
         return """
-                \n
                 create <NAME> - a game
                 list - games
                 join <ID> [WHITE|BLACK] - join a game
