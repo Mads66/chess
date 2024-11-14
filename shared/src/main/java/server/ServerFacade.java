@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import exception.ResponseException;
 import model.AuthData;
 import model.GameData;
-import model.ListGameResponse;
+import model.GamesResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,9 +67,9 @@ public class ServerFacade {
         this.makeRequest("DELETE", path, header, null, null);
     }
 
-    public Collection<ListGameResponse> listGames(String header) throws ResponseException {
+    public GamesResponse listGames(String header) throws ResponseException {
         var path = "/game";
-        return this.makeRequest("GET", path, header, null, Collection.class);
+        return this.makeRequest("GET", path, header, null, GamesResponse.class);
     }
 
     public GameData createGame(String header, Object request) throws ResponseException {
@@ -91,16 +91,10 @@ public class ServerFacade {
             http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
 
-            if ("POST".equals(method) || "PUT".equals(method)) {
-                http.setDoOutput(true);
-                writeHeader(header, http);
-                writeBody(request, http);
-            }
 
-            if ("DELETE".equals(method)) {
-                http.setDoOutput(true);
-                writeHeader(header, http);
-            }
+            http.setDoOutput(true);
+            writeHeader(header, http);
+            writeBody(request, http);
 
             http.connect();
             throwIfNotSuccessful(http);

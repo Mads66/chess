@@ -40,7 +40,7 @@ public class ChessClient {
     public String register(String... params) throws ResponseException {
         if (params.length == 3) {
             var user = new UserData(params[0],params[1],params[2]);
-            this.authData =  server.registerUser(user);
+            authData =  server.registerUser(user);
             state = State.LOGGEDIN;
             return String.format("You successfully registered and logged in as %s", params[0]);
         }
@@ -50,7 +50,7 @@ public class ChessClient {
     public String login(String... params) throws ResponseException {
         if (params.length == 2) {
             var user = new LoginUser(params[0],params[1]);
-            this.authData = server.login(user);
+            authData = server.login(user);
             state = State.LOGGEDIN;
             return String.format("You successfully logged in as %s", params[0]);
         }
