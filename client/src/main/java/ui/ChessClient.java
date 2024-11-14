@@ -27,7 +27,7 @@ public class ChessClient {
                 case "logout" -> logout(params);
                 case "join" -> joinGame(params);
                 case "create" -> createGame(params);
-                case "list" -> listGames(params);
+                case "list" -> listGames();
                 case "observe" -> observeGame(params);
                 case "quit" -> "quit";
                 default -> help();
@@ -85,7 +85,7 @@ public class ChessClient {
         throw new ResponseException(400, "Expected: <gameName>");
     }
 
-    public String listGames(String... params) throws ResponseException {
+    public String listGames() throws ResponseException {
         assertSignedIn();
         return server.listGames(authData.authToken()).toString();
     }

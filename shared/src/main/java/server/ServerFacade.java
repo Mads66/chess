@@ -33,9 +33,9 @@ public class ServerFacade {
         }
     }
 
-    private static void writeHeader(Object request, HttpURLConnection http) throws IOException {
+    private static void writeHeader(String request, HttpURLConnection http) throws IOException {
         if (request != null) {
-            http.setRequestProperty("Authorization", "<tokenString>");
+            http.setRequestProperty("Authorization", request);
         }
     }
 
@@ -62,29 +62,29 @@ public class ServerFacade {
         return this.makeRequest("POST", path, null, request, AuthData.class);
     }
 
-    public void logout(Object header) throws ResponseException {
+    public void logout(String header) throws ResponseException {
         var path = "/session";
         this.makeRequest("DELETE", path, header, null, null);
     }
 
-    public Collection<ListGameResponse> listGames(Object header) throws ResponseException {
+    public Collection<ListGameResponse> listGames(String header) throws ResponseException {
         var path = "/game";
         return this.makeRequest("GET", path, header, null, Collection.class);
     }
 
-    public GameData createGame(Object header, Object request) throws ResponseException {
+    public GameData createGame(String header, Object request) throws ResponseException {
         var path = "/game";
         return this.makeRequest("POST", path, header, request, GameData.class);
     }
 
-    public GameData joinGame(Object header, Object request) throws ResponseException {
+    public GameData joinGame(String header, Object request) throws ResponseException {
         var path = "/game";
         return this.makeRequest("PUT", path, header, request, GameData.class);
     }
 
 
 
-    private <T> T makeRequest(String method, String path, Object header, Object request, Class<T> responseClass) throws ResponseException {
+    private <T> T makeRequest(String method, String path, String header, Object request, Class<T> responseClass) throws ResponseException {
         HttpURLConnection http = null;
         try {
             URL url = (new URI(serverUrl + path)).toURL();
