@@ -92,7 +92,11 @@ public class ChessClient {
 
     public String observeGame(String... params) throws ResponseException {
         assertSignedIn();
-        throw new ResponseException(500, "Not implemented");
+        if (params.length == 1) {
+            JoinGameRequest join = new JoinGameRequest(Integer.parseInt(params[0]),null);
+            var game = server.joinGame(authData.authToken(), join);
+            return String.format("You are successfully observing game %s", params[0]);
+        }
     }
 
     public String help() {

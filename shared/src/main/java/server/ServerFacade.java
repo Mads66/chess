@@ -82,6 +82,11 @@ public class ServerFacade {
         return this.makeRequest("PUT", path, header, request, GameData.class);
     }
 
+    public GameData observeGame(String header, Object request) throws ResponseException {
+        var path = "/game";
+        return this.makeRequest("POST", path, header, request, GameData.class);
+    }
+
 
 
     private <T> T makeRequest(String method, String path, String header, Object request, Class<T> responseClass) throws ResponseException {
