@@ -100,6 +100,13 @@ public class ChessClient {
     public String observeGame(String... params) throws ResponseException {
         assertSignedIn();
         if (params.length == 1) {
+            if (Integer.parseInt(params[0]) <= 0){
+                throw new ResponseException(400, "Please input a gameID from the list of games.");
+            }
+            var list = server.listGames(authData.authToken());
+            if (Integer.parseInt(params[0]) >= list.getGames().size()){
+                throw new ResponseException(400, "Please input a gameID from the list of games.");
+            }
             ChessBoard.main(params);
             return String.format("You are successfully observing the game %s", params[0]);
         }

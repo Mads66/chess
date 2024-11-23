@@ -56,19 +56,22 @@ public class ChessBoard {
         out.println();
 
         for (int row = 0; row < BOARD_SIZE_IN_SQUARES; row++) {
-            int displayRow = isWhitePerspective ? (BOARD_SIZE_IN_SQUARES - row - 1) : row;
+            // For white perspective, count rows from 1 up; for black, count from 8 down
+            int rowNumber = isWhitePerspective ? (BOARD_SIZE_IN_SQUARES - row) : (row + 1);
 
             // Print row number on the left side
-            out.print((BOARD_SIZE_IN_SQUARES - displayRow) + " ");
+            out.print(rowNumber + " ");
+
+            int displayRow = isWhitePerspective ? (BOARD_SIZE_IN_SQUARES - row - 1) : row;
 
             for (int col = 0; col < BOARD_SIZE_IN_SQUARES; col++) {
                 int displayCol = isWhitePerspective ? col : (BOARD_SIZE_IN_SQUARES - col - 1);
 
                 // Alternate square colors
                 if ((displayRow + displayCol) % 2 == 0) {
-                    setWhite(out);
-                } else {
                     setBlack(out);
+                } else {
+                    setWhite(out);
                 }
 
                 // Print piece with color based on whether it's black or white
@@ -77,9 +80,10 @@ public class ChessBoard {
             }
 
             // Print row number on the right side
-            out.print(" " + (BOARD_SIZE_IN_SQUARES - displayRow));
+            out.print(" " + rowNumber);
             out.println();
         }
+
 
         // Print column headers again at the bottom
         out.print("   ");
