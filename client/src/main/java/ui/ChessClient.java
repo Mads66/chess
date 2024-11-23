@@ -3,17 +3,24 @@ package ui;
 import exception.ResponseException;
 import model.*;
 import server.ServerFacade;
+import ui.websocket.NotificationHandler;
+import ui.websocket.WebsocketFacade;
 
 import java.util.Arrays;
 
 public class ChessClient {
     private final ServerFacade server;
+    private final NotificationHandler notificationHandler;
+    private WebsocketFacade ws;
+    private final String serverUrl;
     private State state = State.LOGGEDOUT;
     private AuthData authData;
 
-    public ChessClient(String serverUrl) {
+    public ChessClient(String serverUrl, NotificationHandler notificationHandler) {
         server = new ServerFacade(serverUrl);
+        this.serverUrl = serverUrl;
         this.authData = null;
+        this.notificationHandler = notificationHandler;
     }
 
     public String eval(String input) {
