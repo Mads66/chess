@@ -1,15 +1,15 @@
 package ui;
 
-import com.sun.nio.sctp.HandlerResult;
-import com.sun.nio.sctp.Notification;
-import com.sun.nio.sctp.NotificationHandler;
+import ui.websocket.NotificationHandler;
+import websocket.messages.Notification;
+import websocket.messages.ServerMessage;
 
 import java.util.Scanner;
 
-import static java.awt.Color.*;
-import static org.glassfish.grizzly.Interceptor.RESET;
+import static java.awt.Color.RED;
+import static websocket.messages.ServerMessage.ServerMessageType.LOAD_GAME;
 
-public class Repl {
+public class Repl implements NotificationHandler {
     private final ChessClient client;
 
     public Repl(String serverURL) {
@@ -47,5 +47,11 @@ public class Repl {
 
     private void printPrompt() {
         System.out.print("\n>>> ");
+    }
+
+    @Override
+    public void notify(Notification notification) {
+        System.out.println(RED + notification.getMessage());
+        printPrompt();
     }
 }
