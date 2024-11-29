@@ -1,17 +1,20 @@
 package ui;
 
 import chess.ChessGame;
+import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.List;
 
 import static chess.ChessPiece.PieceType.*;
 
 public class ChessBoard {
 
-    private static chess.ChessBoard board = new chess.ChessBoard();
+    static chess.ChessBoard board;
     private static final int BOARD_SIZE_IN_SQUARES = 8;
 
     public static final String WHITE_KING = " k ";
@@ -28,19 +31,18 @@ public class ChessBoard {
     public static final String BLACK_PAWN = " P ";
     public static final String EMPTY = " \u2003 ";
 
-    public static void main(String[] args) {
+    public static void main(chess.ChessBoard myboard, List<ChessPosition> highlight) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
-        board.resetBoard();
 
         System.out.println("White's perspective:");
-        drawBoard(out, true); // White's perspective
+        drawBoard(myboard, out, true); // White's perspective
 
         System.out.println("\nBlack's perspective:");
-        drawBoard(out, false); // Black's perspective
+        drawBoard(myboard, out, false); // Black's perspective
     }
 
-    private static void drawBoard(PrintStream out, boolean isWhitePerspective) {
-        String[][] board = initializeBoard(isWhitePerspective);
+    private static void drawBoard(chess.ChessBoard myboard, PrintStream out, boolean isWhitePerspective) {
+        String[][] board = initializeBoard(myboard, isWhitePerspective);
 
         // Print column headers
         out.print("   ");
@@ -99,7 +101,7 @@ public class ChessBoard {
         out.println();
     }
 
-    private static String[][] initializeBoard(boolean isWhitePerspective) {
+    private static String[][] initializeBoard(chess.ChessBoard board, boolean isWhitePerspective) {
         String[][] consoleBoard = new String[BOARD_SIZE_IN_SQUARES][BOARD_SIZE_IN_SQUARES];
 
         for (int row = 0; row < BOARD_SIZE_IN_SQUARES; row++) {
