@@ -1,20 +1,15 @@
 package ui;
 
 import chess.ChessGame;
-import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.List;
-
-import static chess.ChessPiece.PieceType.*;
 
 public class ChessBoard {
 
-    static chess.ChessBoard board;
     private static final int BOARD_SIZE_IN_SQUARES = 8;
 
     public static final String WHITE_KING = " k ";
@@ -31,18 +26,28 @@ public class ChessBoard {
     public static final String BLACK_PAWN = " P ";
     public static final String EMPTY = " \u2003 ";
 
-    public static void main(chess.ChessBoard myboard, List<ChessPosition> highlight) {
+    public static void main(chess.ChessBoard myBoard, List<ChessPosition> highlight) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
         System.out.println("White's perspective:");
-        drawBoard(myboard, out, true); // White's perspective
+        drawBoard(myBoard, out, true, highlight); // White's perspective
 
         System.out.println("\nBlack's perspective:");
-        drawBoard(myboard, out, false); // Black's perspective
+        drawBoard(myBoard, out, false, highlight); // Black's perspective
     }
 
-    private static void drawBoard(chess.ChessBoard myboard, PrintStream out, boolean isWhitePerspective) {
-        String[][] board = initializeBoard(myboard, isWhitePerspective);
+    private static void drawBoard(chess.ChessBoard myBoard, PrintStream out, boolean isWhitePerspective, List<ChessPosition> highlight) {
+        String[][] board = initializeBoard(myBoard, isWhitePerspective);
+
+        // Create a 2D boolean array for highlighting
+        boolean[][] highlightedPositions = new boolean[BOARD_SIZE_IN_SQUARES][BOARD_SIZE_IN_SQUARES];
+        if (highlight != null) {
+            for (ChessPosition position : highlight) {
+                int row = position.getRow() - 1; // Convert to 0-based index
+                int col = position.getColumn() - 1; // Convert to 0-based index
+                highlightedPositions[row][col] = true;
+            }
+        }
 
         // Print column headers
         out.print("   ");
@@ -69,8 +74,10 @@ public class ChessBoard {
             for (int col = 0; col < BOARD_SIZE_IN_SQUARES; col++) {
                 int displayCol = isWhitePerspective ? col : (BOARD_SIZE_IN_SQUARES - col - 1);
 
-                // Alternate square colors
-                if ((displayRow + displayCol) % 2 == 0) {
+                // Check if the position is highlighted
+                if (highlightedPositions[displayRow][displayCol]) {
+                    setHighlight(out); // Use a special color for highlighted squares
+                } else if ((displayRow + displayCol) % 2 == 0) {
                     setBlack(out);
                 } else {
                     setWhite(out);
@@ -85,7 +92,6 @@ public class ChessBoard {
             out.print(" " + rowNumber);
             out.println();
         }
-
 
         // Print column headers again at the bottom
         out.print("   ");
@@ -141,6 +147,10 @@ public class ChessBoard {
 
     private static void resetColor(PrintStream out) {
         out.print("\u001B[0m"); // Reset color
+    }
+
+    private static void setHighlight(PrintStream out) {
+        out.print("\u001B[43m\u001B[30m"); // Yellow background, black text
     }
 }
 
