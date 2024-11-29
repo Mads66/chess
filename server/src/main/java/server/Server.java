@@ -3,6 +3,7 @@ package server;
 import com.google.gson.Gson;
 import exception.ResponseException;
 import model.*;
+import server.websocket.WebSocketHandler;
 import service.GameService;
 import spark.*;
 import service.UserService;
@@ -13,6 +14,10 @@ public class Server {
 
     private UserService userService;
     private GameService gameService;
+    private final WebSocketHandler webSocketHandler = new WebSocketHandler();
+
+    public Server() {
+    }
 
     private void initializeServices() throws ResponseException {
         gameService = new GameService();
@@ -29,6 +34,8 @@ public class Server {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
+
+        Spark.webSocket("/ws", webSocketHandler);
 
         try{
             initializeServices();
