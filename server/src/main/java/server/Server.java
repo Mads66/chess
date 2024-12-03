@@ -14,14 +14,12 @@ public class Server {
 
     private UserService userService;
     private GameService gameService;
-    private final WebSocketHandler webSocketHandler = new WebSocketHandler();
-
-    public Server() {
-    }
+    private WebSocketHandler webSocketHandler;
 
     private void initializeServices() throws ResponseException {
         gameService = new GameService();
         userService = new UserService();
+        webSocketHandler = new WebSocketHandler(gameService, userService);
     }
 
     public void clear() throws ResponseException {
