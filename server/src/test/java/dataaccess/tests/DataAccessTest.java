@@ -89,7 +89,7 @@ public class DataAccessTest {
     public void getAuth() throws Exception {
         var original = new UserData("a", "p", "a@a.com");
         var auth = authDAO.createAuth(original);
-        var dbAuth = authDAO.getAuth(auth);
+        var dbAuth = authDAO.getAuth(auth.authToken());
         assertNotNull(dbAuth);
     }
 
@@ -97,7 +97,7 @@ public class DataAccessTest {
     @Order(9)
     public void badGetAuth() throws Exception {
         var randomAuth = new AuthData("notanauthtokenindb", "username");
-        assertNull(authDAO.getAuth(randomAuth));
+        assertNull(authDAO.getAuth(randomAuth.authToken()));
     }
 
     @Test
@@ -106,7 +106,7 @@ public class DataAccessTest {
         var original = new UserData("a", "p", "a@a.com");
         var auth = authDAO.createAuth(original);
         authDAO.deleteAuth(auth);
-        assertNull(authDAO.getAuth(auth));
+        assertNull(authDAO.getAuth(auth.authToken()));
     }
 
     @Test
@@ -123,9 +123,9 @@ public class DataAccessTest {
         var auth2 = authDAO.createAuth(original);
         var auth3 = authDAO.createAuth(original);
         authDAO.clear();
-        assertNull(authDAO.getAuth(auth1));
-        assertNull(authDAO.getAuth(auth2));
-        assertNull(authDAO.getAuth(auth3));
+        assertNull(authDAO.getAuth(auth1.authToken()));
+        assertNull(authDAO.getAuth(auth2.authToken()));
+        assertNull(authDAO.getAuth(auth3.authToken()));
     }
 
     @Test

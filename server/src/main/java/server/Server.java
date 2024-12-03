@@ -33,13 +33,13 @@ public class Server {
 
         Spark.staticFiles.location("web");
 
-        Spark.webSocket("/ws", webSocketHandler);
-
         try{
             initializeServices();
         }catch (Exception e){
             return -1;
         }
+
+        Spark.webSocket("/ws", webSocketHandler);
 
         // Register your endpoints and handle exceptions here.
         Spark.post("/user", this::registerUser);
@@ -71,6 +71,7 @@ public class Server {
         AuthData auth = headerHandler(request);
         var gameData = new Gson().fromJson(request.body(), JoinGameRequest.class);
         var game = gameService.joinGame(auth, gameData.playerColor(), gameData.gameID(), userService);
+
         response.status(200);
         response.type("application/json");
         return new Gson().toJson(game);

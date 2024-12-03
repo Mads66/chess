@@ -20,8 +20,8 @@ public class MemoryAuthDAO implements AuthDAO {
     }
 
     @Override
-    public AuthData getAuth(AuthData auth) throws ResponseException {
-        return auths.get(auth.authToken());
+    public AuthData getAuth(String auth) throws ResponseException {
+        return auths.get(auth);
     }
 
     @Override

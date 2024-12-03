@@ -39,14 +39,14 @@ public class UserService {
     }
 
     public void logoutUser(AuthData auth) throws Exception {
-        if (authAccess.getAuth(auth) == null) {
+        if (authAccess.getAuth(auth.authToken()) == null) {
             throw new ResponseException(401, "Error: unauthorized");
         } else {
             authAccess.deleteAuth(auth);
         }
     }
 
-    public AuthData getAuth(AuthData auth) throws Exception {
+    public AuthData getAuth(String auth) throws Exception {
         return authAccess.getAuth(auth);
     }
 

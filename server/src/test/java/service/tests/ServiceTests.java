@@ -24,7 +24,7 @@ public class ServiceTests {
         var service = new UserService();
         var user = new UserData("username", "password", "email@email.com");
         var expected = service.registerUser(user);
-        var registered = service.getAuth(expected);
+        var registered = service.getAuth(expected.authToken());
         assertEquals(expected, registered);
     }
 
@@ -50,7 +50,7 @@ public class ServiceTests {
         var user = new UserData("username", "password", "email@email.com");
         service.registerUser(user);
         var actual = service.loginUser(user);
-        var expected = service.getAuth(actual);
+        var expected = service.getAuth(actual.authToken());
         assertEquals(expected, actual);
     }
 

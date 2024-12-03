@@ -36,11 +36,11 @@ public class SQLAuthDAO implements AuthDAO {
     }
 
     @Override
-    public AuthData getAuth(AuthData auth) throws ResponseException {
+    public AuthData getAuth(String auth) throws ResponseException {
         try (var conn = DatabaseManager.getConnection()) {
             var statement = "SELECT * FROM auth WHERE authToken = ?";
             try (var ps = conn.prepareStatement(statement)) {
-                ps.setString(1, auth.authToken());
+                ps.setString(1, auth);
                 try (var rs = ps.executeQuery()) {
                     if (rs.next()) {
                         return readAuth(rs);
@@ -55,7 +55,7 @@ public class SQLAuthDAO implements AuthDAO {
 
     @Override
     public void deleteAuth(AuthData auth) throws ResponseException {
-        if (getAuth(auth) != null) {
+        if (getAuth(auth.authToken()) != null) {
             var statement = "DELETE FROM auth WHERE authToken=?";
             DatabaseManager.executeUpdate(statement, auth.authToken());
         } else {

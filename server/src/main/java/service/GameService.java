@@ -14,7 +14,7 @@ public class GameService {
     }
 
     public Collection<GameData> listGames(AuthData auth, UserService userService) throws Exception {
-        var authCheck = userService.getAuth(auth);
+        var authCheck = userService.getAuth(auth.authToken());
         if (authCheck == null) {
             throw new ResponseException(401, "Error: unauthorized");
         } else {
@@ -23,7 +23,7 @@ public class GameService {
     }
 
     public GameData createGame(String gameName, AuthData auth, UserService service) throws Exception {
-        var authCheck = service.getAuth(auth);
+        var authCheck = service.getAuth(auth.authToken());
         if (authCheck == null) {
             throw new ResponseException(401, "Error: unauthorized");
         }
@@ -35,7 +35,7 @@ public class GameService {
     }
 
     public GameData joinGame(AuthData auth, String playerColor, int gameId, UserService service) throws Exception {
-        var authCheck = service.getAuth(auth);
+        var authCheck = service.getAuth(auth.authToken());
         if (authCheck == null) {
             throw new ResponseException(401, "Error: unauthorized");
         } else if (gameId <= 0) {
@@ -46,6 +46,10 @@ public class GameService {
         }else {
             throw new ResponseException(400, "Error: bad request, pick either Black or White");
         }
+    }
+
+    public GameData getGame(int gameId) throws Exception {
+        return gameAccess.getGame(gameId);
     }
 
     public void clear() throws ResponseException {
