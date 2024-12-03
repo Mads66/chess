@@ -69,4 +69,18 @@ public class ConnectionManager {
             connections.get(gameID).remove(c);
         }
     }
+
+    public void generalBroadcast(Integer gameID, ServerMessage notification) throws IOException {
+        var removeList = new ArrayList<Connection>();
+        for (var c : connections.get(gameID)) {
+            if (c.getSession().isOpen()) {
+                c.send(new Gson().toJson(notification));
+            } else {
+                removeList.add(c);
+            }
+        }
+        for (var c : removeList) {
+            connections.get(gameID).remove(c);
+        }
+    }
 }

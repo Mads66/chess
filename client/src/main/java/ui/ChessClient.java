@@ -22,7 +22,7 @@ public class ChessClient {
     private chess.ChessBoard chessBoard;
     private ChessGame chessGame;
     private List<String> rows;
-    private GameData gameData;
+    private GameData myGameData;
     private ChessGame.TeamColor myTeamColor;
 
     public ChessClient(String serverUrl, NotificationHandler notificationHandler) {
@@ -79,7 +79,7 @@ public class ChessClient {
 
     private String resignGame(String... params) throws ResponseException {
         assertGamePlay();
-        int gameID = gameData.gameID();
+        int gameID = myGameData.gameID();
         ws.resignGame(gameID, authData);
         return String.format("You have successfully resigned game %s", gameID);
     }
@@ -100,7 +100,7 @@ public class ChessClient {
             } catch (InvalidMoveException e) {
                 throw new ResponseException(400, "The move you input is invalid");
             }
-            ws.makeMove(gameData.gameID(), authData);
+            ws.makeMove(myGameData.gameID(), authData, move, myTeamColor);
         }
         if (params.length == 5){
             int startRow = rows.indexOf(params[0]);
@@ -116,7 +116,7 @@ public class ChessClient {
             } catch (InvalidMoveException e) {
                 throw new ResponseException(400, "The move you input is invalid");
             }
-            ws.makeMove(gameData.gameID(), authData);
+            ws.makeMove(myGameData.gameID(), authData, move, myTeamColor);
         }
         throw new ResponseException(400, "Please input <start row> <start col> <new row> <new col> " +
                 "<opt promotion piece> for the move you want to make and " +
@@ -125,7 +125,7 @@ public class ChessClient {
 
     private String leaveGame(String... params) throws ResponseException {
         assertGamePlay();
-        int gameID = gameData.gameID();
+        int gameID = myGameData.gameID();
         ws.leaveGame(gameID, authData);
         return String.format("You have successfully left game %s", gameID);
     }
@@ -171,11 +171,9 @@ public class ChessClient {
             } catch (NumberFormatException e) {
                 return "Please select a number from the list of games.";
             }
-            GameData game = server.joinGame(authData.authToken(), join);
-            gameData = game;
-            ws = new WebsocketFacade(serverUrl,notificationHandler);
+            server.joinGame(authData.authToken(), join);
+            ws = new WebsocketFacade(serverUrl,notificationHandler, this);
             ws.joinGame(join, authData);
-            chessGame = game.game();
             ChessBoard.main(chessGame.getBoard(), null);
             chessBoard = chessGame.getBoard();
             state = State.GAMEPLAY;
@@ -189,7 +187,6 @@ public class ChessClient {
         ChessBoard.main(chessBoard, null);
         return "";
     }
-
 
     public String createGame(String... params) throws ResponseException {
         assertSignedIn();
@@ -288,5 +285,11 @@ public class ChessClient {
             return ChessPiece.PieceType.BISHOP;
         }
         throw new ResponseException(400, "Invalid promotion piece");
+    }
+
+    public void updateGameData(GameData gameData) {
+        chessBoard = gameData.game().getBoard();
+        chessGame = gameData.game();
+        myGameData = gameData;
     }
 }

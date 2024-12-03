@@ -2,12 +2,12 @@ package websocket.messages;
 
 import com.google.gson.Gson;
 
-public class Notification {
+public class Notification extends ServerMessage {
     private ServerMessage messageType;
     private String message;
 
-    public Notification(ServerMessage messageType, String message) {
-        this.messageType = messageType;
+    public Notification(ServerMessage.ServerMessageType messageType, String message) {
+        super(messageType);
         this.message = message;
     }
 
