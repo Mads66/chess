@@ -38,67 +38,77 @@ public class WebSocketHandler {
     }
 
     private void connect(int gameID, Session session, String auth) throws Exception {
-        assertAuth(gameID, auth);
-        assertGameID(gameID, auth);
         connections.add(gameID, session, auth);
-        GameData game = gameService.getGame(gameID);
-        String gameBoard = new Gson().toJson(game.game());
-        var gameNote = new Notification(new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME), gameBoard);
-        var message = String.format("joined game %s", gameID);
-        var notification = new Notification(new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION), message);
-        connections.localBroadcast(gameID, gameNote, auth);
-        connections.broadcast(gameID, notification, auth);
+        if (assertAuth(gameID, auth) && assertGameID(gameID, auth)) {
+            GameData game = gameService.getGame(gameID);
+            String gameBoard = new Gson().toJson(game.game());
+            var gameNote = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
+            var message = String.format("joined game %s", gameID);
+            var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+            connections.localBroadcast(gameID, gameNote, auth);
+            connections.broadcast(gameID, notification, auth);
+        }
     }
 
     private void leave(int gameID, String auth) throws IOException {
-        connections.remove(gameID);
-        var message = String.format("player has left game %s", gameID);
-        var notification = new Notification(new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION), message);
-        connections.broadcast(gameID, notification, auth);
+        if (assertAuth(gameID, auth) && assertGameID(gameID, auth)) {
+            connections.remove(gameID, auth);
+            var message = String.format("player has left game %s", gameID);
+            var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+            connections.broadcast(gameID, notification, auth);
+        }
     }
 
     private void resign(int gameID, String auth) throws IOException {
-        connections.remove(gameID);
-        var message = String.format("player has resigned game %s", gameID);
-        var notification = new Notification(new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION), message);
-        connections.broadcast(gameID, notification, auth);
-    }
-
-    private void makeMove(int gameID, Session session, String auth) throws ResponseException {
-        try {
-            var message = String.format("making move in game %s", gameID);
-            var game = new Notification(new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME), null);
-            var notification = new Notification(new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION), message);
-            connections.localBroadcast(gameID, game, auth);
+        if (assertAuth(gameID, auth) && assertGameID(gameID, auth)) {
+            connections.remove(gameID, auth);
+            var message = String.format("player has resigned game %s", gameID);
+            var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
             connections.broadcast(gameID, notification, auth);
-        } catch (Exception ex) {
-            throw new ResponseException(500, ex.getMessage());
         }
     }
 
-    private void assertAuth(int gameID, String auth) throws ResponseException {
+    private void makeMove(int gameID, Session session, String auth) throws IOException {
+        if (assertAuth(gameID, auth) && assertGameID(gameID, auth)) {
+            try {
+                var message = String.format("making move in game %s", gameID);
+                var game = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
+                connections.localBroadcast(gameID, game, auth);
+                connections.broadcast(gameID, game, auth);
+            } catch (Exception ex) {
+                var notification = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
+                connections.localBroadcast(gameID, notification, auth);
+            }
+        }
+    }
+
+    private boolean assertAuth(int gameID, String auth) throws IOException {
         try {
             if (userService.getAuth(auth) == null){
                 var message = "user is not authorized";
-                var notification = new Notification(new ServerMessage(ServerMessage.ServerMessageType.ERROR), message);
+                var notification = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
                 connections.localBroadcast(gameID, notification, auth);
-                throw new ResponseException(400, message);
+                return false;
             }
         } catch (Exception ex){
-            throw new ResponseException(500, ex.getMessage());
+            var notification = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
+            connections.localBroadcast(gameID,notification,auth);
         }
+        return true;
     }
 
-    private void assertGameID (int gameID, String auth) throws ResponseException {
+    private boolean assertGameID (int gameID, String auth) throws IOException {
         try {
             if (gameService.getGame(gameID) == null) {
                 var message = String.format("game %s not found", gameID);
-                var notification = new Notification(new ServerMessage(ServerMessage.ServerMessageType.ERROR), message);
+                var notification = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
                 connections.localBroadcast(gameID, notification, auth);
-                throw new ResponseException(400, message);
+                return false;
             }
         } catch (Exception ex) {
-            throw new ResponseException(500, ex.getMessage());
+            var notification = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
+            connections.localBroadcast(gameID,notification,auth);
         }
+        return true;
     }
 }
