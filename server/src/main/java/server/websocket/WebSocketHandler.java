@@ -3,6 +3,7 @@ package server.websocket;
 import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPiece;
+import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import model.AuthData;
 import model.GameData;
@@ -63,10 +64,23 @@ public class WebSocketHandler {
     private void leave(int gameID, String auth) throws IOException {
         if (assertAuth(gameID, auth) && assertGameID(gameID, auth)) {
             try {
-                connections.remove(gameID, auth);
-                var message = String.format("player has left game %s", gameID);
-                var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-                connections.generalBroadcast(gameID, notification);
+                AuthData authData = userService.getAuth(auth);
+                if (gameService.getGame(gameID).whiteUsername().equals(authData.username())) {
+                    String playerColor = "WHITE";
+                    gameService.leaveGame(playerColor, gameID);
+                    var message = String.format("%s has resigned game", authData.username());
+                    var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                    connections.generalBroadcast(gameID, notification);
+                } else if (gameService.getGame(gameID).blackUsername().equals(authData.username())) {
+                    String playerColor = "BLACK";
+                    gameService.leaveGame(playerColor, gameID);
+                    var message = String.format("%s has resigned game", authData.username());
+                    var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                    connections.generalBroadcast(gameID, notification);
+                } else {
+                    var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, String.format("%s is not a player in this game", authData.username()));
+                    connections.localBroadcast(gameID, error, auth);
+                }
             } catch (Exception ex) {
                 var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
                 connections.localBroadcast(gameID, notification, auth);
@@ -77,9 +91,22 @@ public class WebSocketHandler {
     private void resign(int gameID, String auth) throws IOException {
         if (assertAuth(gameID, auth) && assertGameID(gameID, auth)) {
             try {
-                var message = String.format("player has resigned game %s", gameID);
-                var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-                connections.generalBroadcast(gameID, notification);
+                AuthData authData = userService.getAuth(auth);
+                GameData gameBoard = gameService.getGame(gameID);
+                if (gameBoard.whiteUsername().equals(authData.username())){
+                    gameBoard.game().resignGame();
+                    var message = String.format("%s has resigned game and game %s is over", authData.username(), gameID);
+                    var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                    connections.generalBroadcast(gameID, notification);
+                } else if (gameBoard.blackUsername().equals(authData.username())){
+                    gameBoard.game().resignGame();
+                    var message = String.format("%s has resigned game and game %s is over", authData.username(), gameID);
+                    var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                    connections.generalBroadcast(gameID, notification);
+                } else {
+                    var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, String.format("%s is not a player in this game", authData.username()));
+                    connections.localBroadcast(gameID, error, auth);
+                }
             } catch (Exception ex) {
                 var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
                 connections.localBroadcast(gameID, notification, auth);
@@ -91,6 +118,12 @@ public class WebSocketHandler {
         if (assertAuth(gameID, auth) && assertGameID(gameID, auth) && assertChessMove(gameID,auth,move)) {
             try {
                 GameData gameBoard = gameService.getGame(gameID);
+                try {
+                    gameBoard.game().makeMove(move);
+                } catch (InvalidMoveException e) {
+                    var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, e.getMessage());
+                    connections.localBroadcast(gameID,error,auth);
+                }
                 var game = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameBoard);
                 String message = String.format("player made move %s", move.getEndPosition());
                 var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
@@ -155,6 +188,15 @@ public class WebSocketHandler {
             GameData game = gameService.getGame(gameID);
             AuthData authData = userService.getAuth(auth);
             if (game == null) {
+                var message = String.format("game %s not found", gameID);
+                var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
+                connections.localBroadcast(gameID, notification, auth);
+                return false;
+            }
+            if (game.game().getGameOver()){
+                var message = String.format("game %s is over", gameID);
+                var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
+                connections.localBroadcast(gameID, notification, auth);
                 return false;
             }
 

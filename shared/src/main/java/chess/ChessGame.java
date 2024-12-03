@@ -13,11 +13,13 @@ import java.util.Objects;
 public class ChessGame {
     private ChessBoard myBoard;
     private TeamColor teamTurn;
+    private Boolean gameOver;
 
     public ChessGame() {
         myBoard = new ChessBoard();
         myBoard.resetBoard();
         teamTurn = TeamColor.WHITE;
+        gameOver = false;
     }
 
     @Override
@@ -211,6 +213,9 @@ public class ChessGame {
         for (ChessPosition piece : teamPieces) {
             possibleMoves.addAll(validMoves(piece));
         }
+        if (possibleMoves.isEmpty()){
+            gameOver = true;
+        }
         return possibleMoves.isEmpty();
     }
 
@@ -248,6 +253,9 @@ public class ChessGame {
         for (ChessPosition piece : teamPieces) {
             possibleMoves.addAll(validMoves(piece));
         }
+        if (possibleMoves.isEmpty()){
+            gameOver = true;
+        }
 
         return possibleMoves.isEmpty();
     }
@@ -259,6 +267,14 @@ public class ChessGame {
      */
     public void setBoard(ChessBoard board) {
         myBoard = board;
+    }
+
+    public void resignGame(){
+        gameOver = true;
+    }
+
+    public Boolean getGameOver(){
+        return gameOver;
     }
 
     private ChessBoard copyBoard(ChessBoard board) {

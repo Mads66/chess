@@ -52,6 +52,11 @@ public class GameService {
         return gameAccess.getGame(gameId);
     }
 
+    public GameData leaveGame(String playerColor, int gameId) throws Exception {
+        gameAccess.leaveGame(playerColor, gameId);
+        return gameAccess.getGame(gameId);
+    }
+
     public void clear() throws ResponseException {
         gameAccess.clear();
     }

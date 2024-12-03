@@ -95,11 +95,6 @@ public class ChessClient {
             ChessPosition piece = new ChessPosition(startRow, startCol);
             ChessPosition newPosition = new ChessPosition(endRow, endCol);
             ChessMove move = new ChessMove(piece, newPosition, null);
-            try {
-                chessGame.makeMove(move);
-            } catch (InvalidMoveException e) {
-                throw new ResponseException(400, "The move you input is invalid");
-            }
             ws.makeMove(myGameData.gameID(), authData, move, myTeamColor);
         }
         if (params.length == 5){
@@ -111,11 +106,6 @@ public class ChessClient {
             ChessPosition piece = new ChessPosition(startRow, startCol);
             ChessPosition newPosition = new ChessPosition(endRow, endCol);
             ChessMove move = new ChessMove(piece, newPosition, promotion);
-            try {
-                chessGame.makeMove(move);
-            } catch (InvalidMoveException e) {
-                throw new ResponseException(400, "The move you input is invalid");
-            }
             ws.makeMove(myGameData.gameID(), authData, move, myTeamColor);
         }
         throw new ResponseException(400, "Please input <start row> <start col> <new row> <new col> " +

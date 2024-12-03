@@ -106,6 +106,32 @@ public class SQLGameDAO implements GameDAO {
         }
     }
 
+    public void leaveGame(String playerColor, int gameID) throws ResponseException {
+        var game = getGame(gameID);
+        if (game != null) {
+            if (Objects.equals(playerColor, "BLACK") && game.blackUsername() != null) {
+                var statement = "UPDATE games SET blackUsername = null WHERE gameID = ?";
+                DatabaseManager.executeUpdate(statement, gameID);
+            }
+            if (Objects.equals(playerColor, "WHITE") && game.whiteUsername() != null) {
+                var statement = "UPDATE games SET whiteUsername = null WHERE gameID = ?";
+                DatabaseManager.executeUpdate(statement, gameID);
+            } else {
+                throw new ResponseException(403, "Error: User is not a player in this game");
+            }
+        }
+    }
+
+    public void deleteGame(int gameID) throws ResponseException {
+        var game = getGame(gameID);
+        if (game != null) {
+            var statement = "DELETE FROM games WHERE gameID = ?";
+            DatabaseManager.executeUpdate(statement, gameID);
+        } else {
+            throw new ResponseException(400, "Error: game does not exist");
+        }
+    }
+
     public void clear() throws ResponseException {
         var statement = "TRUNCATE games";
         executeUpdate(statement);
