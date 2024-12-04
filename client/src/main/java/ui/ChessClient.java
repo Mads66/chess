@@ -81,7 +81,7 @@ public class ChessClient {
         assertGamePlay();
         int gameID = myGameData.gameID();
         ws.resignGame(gameID, authData);
-        return String.format("You have successfully resigned game %s", gameID);
+        return String.format("You have successfully resigned from game %s", gameID);
     }
 
     private String movePiece(String... params) throws ResponseException {

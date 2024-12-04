@@ -52,7 +52,15 @@ public class WebSocketHandler {
                 GameData gameBoard = gameService.getGame(gameID);
                 var gameNote = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameBoard);
                 String username = userService.getAuth(auth).username();
-                var notification = getNotificationMessage(gameBoard, username);
+                String message;
+                if (gameBoard.whiteUsername() != null && gameBoard.whiteUsername().equals(username)) {
+                    message = String.format("%s joined game as white player", username);
+                } else if (gameBoard.blackUsername() != null && gameBoard.blackUsername().equals(username)) {
+                    message = String.format("%s joined game as black player", username);
+                } else {
+                    message = String.format("%s joined game as an observer", username);
+                }
+                var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
                 connections.localBroadcast(gameID, gameNote, auth);
                 connections.broadcast(gameID, notification, auth);
             } catch (Exception ex) {
@@ -60,19 +68,6 @@ public class WebSocketHandler {
                 connections.localBroadcast(gameID, notification, auth);
             }
         }
-    }
-
-    private static NotificationMessage getNotificationMessage(GameData gameBoard, String username) {
-        String message;
-        if (gameBoard.whiteUsername() != null && gameBoard.whiteUsername().equals(username)) {
-            message = String.format("%s joined game as white player", username);
-        } else if (gameBoard.blackUsername() != null && gameBoard.blackUsername().equals(username)) {
-            message = String.format("%s joined game as black player", username);
-        } else {
-            message = String.format("%s joined game as an observer", username);
-        }
-        var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-        return notification;
     }
 
     private void leave(int gameID, String auth) throws IOException {

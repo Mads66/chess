@@ -52,7 +52,7 @@ public class WebsocketFacade extends Endpoint {
                                 LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
                                 GameData gameData = loadGameMessage.getGame();
                                 chessClient.updateGameData(gameData);
-                                notificationHandler.notify(new Notification(loadGameMessage.getServerMessageType(), "Please reload game board"));
+                                notificationHandler.notify(new Notification(loadGameMessage.getServerMessageType(), "LOAD BOARD"));
                             }
                             case ERROR -> {
                                 ErrorMessage errorMessage = new Gson().fromJson(message, ErrorMessage.class);
