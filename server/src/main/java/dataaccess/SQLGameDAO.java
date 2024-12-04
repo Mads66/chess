@@ -122,7 +122,7 @@ public class SQLGameDAO implements GameDAO {
         }
     }
 
-    public void resignGame(int gameID, ChessGame chessGame) throws ResponseException {
+    public void updateGame(int gameID, ChessGame chessGame) throws ResponseException {
         var game = getGame(gameID);
         if (game != null) {
             var json = new Gson().toJson(chessGame);

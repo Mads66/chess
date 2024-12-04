@@ -58,11 +58,15 @@ public class GameService {
         return gameAccess.getGame(gameId);
     }
 
-    public GameData resignGame(ChessGame chessGame, int gameId) throws Exception {
+    public GameData resignGame(int gameId) throws Exception {
         GameData game = gameAccess.getGame(gameId);
         game.game().resignGame();
-        gameAccess.resignGame(gameId, chessGame);
+        gameAccess.updateGame(gameId, game.game());
         return game;
+    }
+
+    public void updateGame(ChessGame game, int gameID) throws Exception {
+        gameAccess.updateGame(gameID, game);
     }
 
     public void clear() throws ResponseException {

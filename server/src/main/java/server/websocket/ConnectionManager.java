@@ -83,4 +83,8 @@ public class ConnectionManager {
             connections.get(gameID).remove(c);
         }
     }
+
+    public List<Connection> getConnections(Integer gameID) {
+        return connections.get(gameID);
+    }
 }

@@ -17,6 +17,7 @@ import websocket.commands.UserGameCommand;
 import websocket.messages.*;
 
 import java.io.IOException;
+import java.util.List;
 
 @WebSocket
 public class WebSocketHandler {
@@ -46,20 +47,12 @@ public class WebSocketHandler {
 
     private void connect(int gameID, Session session, String auth) throws Exception {
         connections.add(gameID, session, auth);
-        if (assertAuth(gameID, auth) && assertGameID(gameID, auth)) {
+        if (assertAuth(gameID, auth, false) && assertGameID(gameID, auth)) {
             try {
                 GameData gameBoard = gameService.getGame(gameID);
                 var gameNote = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameBoard);
                 String username = userService.getAuth(auth).username();
-                String message;
-                if (gameBoard.whiteUsername().equals(username)) {
-                    message = String.format("%s joined game as white player", username);
-                } else if (gameBoard.blackUsername().equals(username)) {
-                    message = String.format("%s joined game as black player", username);
-                } else {
-                    message = String.format("%s joined game as an observer", username);
-                }
-                var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                var notification = getNotificationMessage(gameBoard, username);
                 connections.localBroadcast(gameID, gameNote, auth);
                 connections.broadcast(gameID, notification, auth);
             } catch (Exception ex) {
@@ -69,26 +62,42 @@ public class WebSocketHandler {
         }
     }
 
+    private static NotificationMessage getNotificationMessage(GameData gameBoard, String username) {
+        String message;
+        if (gameBoard.whiteUsername() != null && gameBoard.whiteUsername().equals(username)) {
+            message = String.format("%s joined game as white player", username);
+        } else if (gameBoard.blackUsername() != null && gameBoard.blackUsername().equals(username)) {
+            message = String.format("%s joined game as black player", username);
+        } else {
+            message = String.format("%s joined game as an observer", username);
+        }
+        var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        return notification;
+    }
+
     private void leave(int gameID, String auth) throws IOException {
-        if (assertAuth(gameID, auth) && assertGameID(gameID, auth)) {
+        if (assertAuth(gameID, auth, true) && assertGameID(gameID, auth)) {
             try {
                 AuthData authData = userService.getAuth(auth);
-                if (gameService.getGame(gameID).whiteUsername().equals(authData.username())) {
+                GameData gameBoard = gameService.getGame(gameID);
+                if (gameBoard.whiteUsername() != null && gameBoard.whiteUsername().equals(authData.username())) {
                     String playerColor = "WHITE";
                     gameService.leaveGame(playerColor, gameID);
-                    var message = String.format("%s has resigned game", authData.username());
+                    var message = String.format("%s has left the game", authData.username());
                     var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-                    connections.generalBroadcast(gameID, notification);
-                } else if (gameService.getGame(gameID).blackUsername().equals(authData.username())) {
+                    connections.broadcast(gameID, notification, auth);
+                } else if (gameBoard.blackUsername() != null && gameService.getGame(gameID).blackUsername().equals(authData.username())) {
                     String playerColor = "BLACK";
                     gameService.leaveGame(playerColor, gameID);
-                    var message = String.format("%s has resigned game", authData.username());
+                    var message = String.format("%s has left the game", authData.username());
                     var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-                    connections.generalBroadcast(gameID, notification);
+                    connections.broadcast(gameID, notification, auth);
                 } else {
-                    var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, String.format("%s is not a player in this game", authData.username()));
-                    connections.localBroadcast(gameID, error, auth);
+                    var message = String.format("%s has left the game", authData.username());
+                    var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                    connections.broadcast(gameID, notification, auth);
                 }
+                connections.remove(gameID, auth);
             } catch (Exception ex) {
                 var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
                 connections.localBroadcast(gameID, notification, auth);
@@ -96,18 +105,18 @@ public class WebSocketHandler {
         }
     }
 
-    private void resign(int gameID, String auth) throws IOException {
-        if (assertAuth(gameID, auth) && assertGameID(gameID, auth)) {
+    private void resign(int gameID, String auth) throws Exception {
+        if (assertAuth(gameID, auth, true) && assertGameID(gameID, auth) && assertGameplay(gameID, auth)) {
             try {
                 AuthData authData = userService.getAuth(auth);
                 GameData gameBoard = gameService.getGame(gameID);
                 if (gameBoard.whiteUsername().equals(authData.username())){
-                    gameService.resignGame(gameBoard.game(), gameID);
+                    gameService.resignGame(gameID);
                     var message = String.format("%s has resigned game and game %s is over", authData.username(), gameID);
                     var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
                     connections.generalBroadcast(gameID, notification);
                 } else if (gameBoard.blackUsername().equals(authData.username())){
-                    gameService.resignGame(gameBoard.game(),gameID);
+                    gameService.resignGame(gameID);
                     var message = String.format("%s has resigned game and game %s is over", authData.username(), gameID);
                     var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
                     connections.generalBroadcast(gameID, notification);
@@ -122,12 +131,13 @@ public class WebSocketHandler {
         }
     }
 
-    private void makeMove(int gameID, String auth, ChessMove move) throws IOException {
-        if (assertAuth(gameID, auth) && assertGameID(gameID, auth) && assertChessMove(gameID,auth,move)) {
+    private void makeMove(int gameID, String auth, ChessMove move) throws Exception {
+        if (assertAuth(gameID, auth, true) && assertGameID(gameID, auth) && assertChessMove(gameID,auth,move) && assertGameplay(gameID, auth)) {
             try {
                 GameData gameBoard = gameService.getGame(gameID);
                 try {
                     gameBoard.game().makeMove(move);
+                    gameService.updateGame(gameBoard.game(), gameID);
                 } catch (InvalidMoveException e) {
                     var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, e.getMessage());
                     connections.localBroadcast(gameID,error,auth);
@@ -139,14 +149,19 @@ public class WebSocketHandler {
                 connections.generalBroadcast(gameID, game);
                 ChessGame.TeamColor color = gameBoard.game().getTeamTurn();
                 if (gameBoard.game().isInCheck(color)) {
-                    var check = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, String.format("%s is in check", color.toString()));
-                    connections.generalBroadcast(gameID, check);
-                }
-                if (gameBoard.game().isInCheckmate(color)) {
-                    var check = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, String.format("%s is in checkmate, Game Over!", color.toString()));
-                    connections.generalBroadcast(gameID, check);
+                    if (gameBoard.game().isInCheckmate(color)) {
+                        gameBoard.game().resignGame();
+                        gameService.updateGame(gameBoard.game(), gameID);
+                        var check = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, String.format("%s is in checkmate, Game Over!", color.toString()));
+                        connections.generalBroadcast(gameID, check);
+                    } else {
+                        var check = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, String.format("%s is in check", color.toString()));
+                        connections.generalBroadcast(gameID, check);
+                    }
                 }
                 if (gameBoard.game().isInStalemate(color)) {
+                    gameBoard.game().resignGame();
+                    gameService.updateGame(gameBoard.game(), gameID);
                     var check = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, "Stalemate!");
                     connections.generalBroadcast(gameID, check);
                 }
@@ -157,12 +172,23 @@ public class WebSocketHandler {
         }
     }
 
-    private boolean assertAuth(int gameID, String auth) throws IOException {
+    private boolean assertAuth(int gameID, String auth, Boolean gamePlay) throws IOException {
         try {
-            ChessGame game = gameService.getGame(gameID).game();
             AuthData authData = userService.getAuth(auth);
             if (authData == null){
                 var message = "user is not authorized";
+                var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
+                connections.localBroadcast(gameID, notification, auth);
+                connections.remove(gameID, auth);
+                return false;
+            } else if (gamePlay){
+                List<Connection> users = connections.getConnections(gameID);
+                for (var user : users){
+                    if (user.getPlayerAuth().equals(auth)){
+                        return true;
+                    }
+                }
+                var message = "player is not authorized";
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
                 connections.localBroadcast(gameID, notification, auth);
                 return false;
@@ -241,6 +267,19 @@ public class WebSocketHandler {
             var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, ex.getMessage());
             connections.localBroadcast(gameID, notification, auth);
         }
+        var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, "Invalid move");
+        connections.localBroadcast(gameID, notification, auth);
         return false;
+    }
+
+    private boolean assertGameplay(int gameID, String auth) throws Exception {
+        ChessGame game = gameService.getGame(gameID).game();
+        if (game.getGameOver()){
+            var message = String.format("game %s is no longer playable", gameID);
+            var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
+            connections.localBroadcast(gameID, notification, auth);
+            return false;
+        }
+        return true;
     }
 }
