@@ -122,11 +122,13 @@ public class SQLGameDAO implements GameDAO {
         }
     }
 
-    public void deleteGame(int gameID) throws ResponseException {
+    public void resignGame(int gameID, ChessGame chessGame) throws ResponseException {
         var game = getGame(gameID);
         if (game != null) {
-            var statement = "DELETE FROM games WHERE gameID = ?";
-            DatabaseManager.executeUpdate(statement, gameID);
+            var json = new Gson().toJson(chessGame);
+            var statement = "UPDATE games SET json = ? where gameID = ?";
+            DatabaseManager.executeUpdate(statement, json, gameID);
+
         } else {
             throw new ResponseException(400, "Error: game does not exist");
         }

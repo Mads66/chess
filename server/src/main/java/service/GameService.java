@@ -1,5 +1,6 @@
 package service;
 
+import chess.ChessGame;
 import dataaccess.SQLGameDAO;
 import exception.ResponseException;
 import model.AuthData;
@@ -55,6 +56,13 @@ public class GameService {
     public GameData leaveGame(String playerColor, int gameId) throws Exception {
         gameAccess.leaveGame(playerColor, gameId);
         return gameAccess.getGame(gameId);
+    }
+
+    public GameData resignGame(ChessGame chessGame, int gameId) throws Exception {
+        GameData game = gameAccess.getGame(gameId);
+        game.game().resignGame();
+        gameAccess.resignGame(gameId, chessGame);
+        return game;
     }
 
     public void clear() throws ResponseException {
