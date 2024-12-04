@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import model.AuthData;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import service.GameService;
@@ -36,28 +37,33 @@ public class WebSocketHandler {
         UserGameCommand action = new Gson().fromJson(message, UserGameCommand.class);
         switch (action.getCommandType()) {
             case CONNECT -> connect(action.getGameID(), session, action.getAuthToken());
-            case LEAVE -> leave(action.getGameID(), action.getAuthToken());
-            case RESIGN -> resign(action.getGameID(), action.getAuthToken());
+            case LEAVE -> leave(action.getGameID(), action.getAuthToken(), session);
+            case RESIGN -> resign(action.getGameID(), action.getAuthToken(), session);
             case MAKE_MOVE -> {
                 MoveCommand moveCommand = new Gson().fromJson(message, MoveCommand.class);
-                makeMove(moveCommand.getGameID(), moveCommand.getAuthToken(), moveCommand.getMove());
+                makeMove(moveCommand.getGameID(), moveCommand.getAuthToken(), session, moveCommand.getMove());
             }
         }
     }
 
+    @OnWebSocketError
+    public void onError(Session session, Throwable error) {
+        error.printStackTrace();
+    }
+
     private void connect(int gameID, Session session, String auth) throws Exception {
         connections.add(gameID, session, auth);
-        if (assertAuth(gameID, auth, false) && assertGameID(gameID, auth)) {
+        if (assertAuth(gameID, auth, session, false) && assertGameID(gameID, auth, session)) {
             try {
                 GameData gameBoard = gameService.getGame(gameID);
                 var gameNote = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameBoard);
                 String username = userService.getAuth(auth).username();
                 var notification = getMessage(gameBoard, username);
-                connections.localBroadcast(gameID, gameNote, auth);
+                connections.localBroadcast(gameID, gameNote, session);
                 connections.broadcast(gameID, notification, auth);
             } catch (Exception ex) {
                 var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
             }
         }
     }
@@ -75,8 +81,8 @@ public class WebSocketHandler {
         return notification;
     }
 
-    private void leave(int gameID, String auth) throws IOException {
-        if (assertAuth(gameID, auth, true) && assertGameID(gameID, auth)) {
+    private void leave(int gameID, String auth, Session session) throws IOException {
+        if (assertAuth(gameID, auth, session,true) && assertGameID(gameID, auth, session)) {
             try {
                 AuthData authData = userService.getAuth(auth);
                 GameData gameBoard = gameService.getGame(gameID);
@@ -101,14 +107,14 @@ public class WebSocketHandler {
                 connections.remove(gameID, auth);
             } catch (Exception ex) {
                 var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
             }
         }
     }
 
-    private void resign(int gameID, String auth) throws Exception {
-        if (assertAuth(gameID, auth, true) && assertGameID(gameID, auth) &&
-                assertGameplay(gameID, auth)) {
+    private void resign(int gameID, String auth, Session session) throws Exception {
+        if (assertAuth(gameID, auth, session,true) && assertGameID(gameID, auth, session) &&
+                assertGameplay(gameID, session)) {
             try {
                 AuthData authData = userService.getAuth(auth);
                 GameData gameBoard = gameService.getGame(gameID);
@@ -128,18 +134,18 @@ public class WebSocketHandler {
                 } else {
                     var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR,
                             String.format("%s is not a player in this game", authData.username()));
-                    connections.localBroadcast(gameID, error, auth);
+                    connections.localBroadcast(gameID, error, session);
                 }
             } catch (Exception ex) {
                 var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
             }
         }
     }
 
-    private void makeMove(int gameID, String auth, ChessMove move) throws Exception {
-        if (assertAuth(gameID, auth, true) && assertGameID(gameID, auth) &&
-                assertChessMove(gameID,auth,move) && assertGameplay(gameID, auth)) {
+    private void makeMove(int gameID, String auth, Session session, ChessMove move) throws Exception {
+        if (assertAuth(gameID, auth, session, true) && assertGameID(gameID, auth, session) &&
+                assertChessMove(gameID,auth,session,move) && assertGameplay(gameID, session)) {
             try {
                 GameData gameBoard = gameService.getGame(gameID);
                 try {
@@ -147,7 +153,7 @@ public class WebSocketHandler {
                     gameService.updateGame(gameBoard.game(), gameID);
                 } catch (InvalidMoveException e) {
                     var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, e.getMessage());
-                    connections.localBroadcast(gameID,error,auth);
+                    connections.localBroadcast(gameID,error,session);
                 }
                 var game = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameBoard);
                 String message = String.format("player made move %s", move.getEndPosition());
@@ -176,18 +182,18 @@ public class WebSocketHandler {
                 }
             } catch (Exception ex) {
                 var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
             }
         }
     }
 
-    private boolean assertAuth(int gameID, String auth, Boolean gamePlay) throws IOException {
+    private boolean assertAuth(int gameID, String auth, Session session, boolean gamePlay) throws IOException {
         try {
             AuthData authData = userService.getAuth(auth);
             if (authData == null){
-                var message = "Error: user is not authorized";
+                String message = "Error: user is not authorized";
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
                 connections.remove(gameID, auth);
                 return false;
             } else if (gamePlay){
@@ -199,49 +205,49 @@ public class WebSocketHandler {
                 }
                 var message = "Error: player is not authorized";
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
                 return false;
             } else {
                 return true;
             }
         } catch (Exception ex){
             var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, ex.getMessage());
-            connections.localBroadcast(gameID,notification,auth);
+            connections.localBroadcast(gameID,notification,session);
         }
         return false;
     }
 
-    private boolean assertGameID (int gameID, String auth) throws IOException {
+    private boolean assertGameID (int gameID, String auth, Session session) throws IOException {
         try {
             if (gameService.getGame(gameID) == null) {
                 var message = String.format("Error: game %s not found", gameID);
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
                 return false;
             }else {
                 return true;
             }
         } catch (Exception ex) {
             var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, ex.getMessage());
-            connections.localBroadcast(gameID,notification,auth);
+            connections.localBroadcast(gameID,notification,session);
         }
         return false;
     }
 
-    private boolean assertChessMove(int gameID, String auth, ChessMove move) throws IOException {
+    private boolean assertChessMove(int gameID, String auth, Session session, ChessMove move) throws IOException {
         try {
             GameData game = gameService.getGame(gameID);
             AuthData authData = userService.getAuth(auth);
             if (game == null) {
                 var message = String.format("Error : game %s not found", gameID);
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
                 return false;
             }
             if (game.game().getGameOver()){
                 var message = String.format("Error: game %s is over", gameID);
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
                 return false;
             }
 
@@ -251,12 +257,12 @@ public class WebSocketHandler {
             if (teamColor == ChessGame.TeamColor.BLACK && !game.blackUsername().equals(authData.username())){
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR,
                         "Error: That is not your piece to move");
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
                 return false;
             } else if (teamColor == ChessGame.TeamColor.WHITE && !game.whiteUsername().equals(authData.username())){
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR,
                         "Error: That is not your piece to move");
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
                 return false;
             }
             if(chessGame.isInCheckmate(piece.getTeamColor())){
@@ -268,7 +274,7 @@ public class WebSocketHandler {
             if(chessGame.getTeamTurn() != piece.getTeamColor()){
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR,
                         "Error: It is not your turn");
-                connections.localBroadcast(gameID, notification, auth);
+                connections.localBroadcast(gameID, notification, session);
                 return false;
             }
             var validMoves = chessGame.validMoves(move.getStartPosition());
@@ -277,20 +283,20 @@ public class WebSocketHandler {
             }
         } catch (Exception ex) {
             var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, ex.getMessage());
-            connections.localBroadcast(gameID, notification, auth);
+            connections.localBroadcast(gameID, notification, session);
         }
         var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR,
                 "Error: Invalid move");
-        connections.localBroadcast(gameID, notification, auth);
+        connections.localBroadcast(gameID, notification, session);
         return false;
     }
 
-    private boolean assertGameplay(int gameID, String auth) throws Exception {
+    private boolean assertGameplay(int gameID, Session session) throws Exception {
         ChessGame game = gameService.getGame(gameID).game();
         if (game.getGameOver()){
             var message = String.format("Error: game %s is no longer playable", gameID);
             var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
-            connections.localBroadcast(gameID, notification, auth);
+            connections.localBroadcast(gameID, notification, session);
             return false;
         }
         return true;

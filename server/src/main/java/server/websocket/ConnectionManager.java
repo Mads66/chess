@@ -3,7 +3,6 @@ package server.websocket;
 
 import com.google.gson.Gson;
 import org.eclipse.jetty.websocket.api.Session;
-import websocket.messages.Notification;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -54,11 +53,11 @@ public class ConnectionManager {
         }
     }
 
-    public void localBroadcast(Integer gameID, ServerMessage notification, String auth) throws IOException {
+    public void localBroadcast(Integer gameID, ServerMessage notification, Session session) throws IOException {
         var removeList = new ArrayList<Connection>();
         for (var c : connections.get(gameID)) {
             if (c.getSession().isOpen()) {
-                if (c.getPlayerAuth().equals(auth)) {
+                if (c.getSession().equals(session)) {
                     c.send(new Gson().toJson(notification));
                 }
             } else {
