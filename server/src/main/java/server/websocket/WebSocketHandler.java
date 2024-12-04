@@ -52,15 +52,7 @@ public class WebSocketHandler {
                 GameData gameBoard = gameService.getGame(gameID);
                 var gameNote = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameBoard);
                 String username = userService.getAuth(auth).username();
-                String message;
-                if (gameBoard.whiteUsername() != null && gameBoard.whiteUsername().equals(username)) {
-                    message = String.format("%s joined game as white player", username);
-                } else if (gameBoard.blackUsername() != null && gameBoard.blackUsername().equals(username)) {
-                    message = String.format("%s joined game as black player", username);
-                } else {
-                    message = String.format("%s joined game as an observer", username);
-                }
-                var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                var notification = getMessage(gameBoard, username);
                 connections.localBroadcast(gameID, gameNote, auth);
                 connections.broadcast(gameID, notification, auth);
             } catch (Exception ex) {
@@ -68,6 +60,19 @@ public class WebSocketHandler {
                 connections.localBroadcast(gameID, notification, auth);
             }
         }
+    }
+
+    private static NotificationMessage getMessage(GameData gameBoard, String username) {
+        String message;
+        if (gameBoard.whiteUsername() != null && gameBoard.whiteUsername().equals(username)) {
+            message = String.format("%s joined game as white player", username);
+        } else if (gameBoard.blackUsername() != null && gameBoard.blackUsername().equals(username)) {
+            message = String.format("%s joined game as black player", username);
+        } else {
+            message = String.format("%s joined game as an observer", username);
+        }
+        var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        return notification;
     }
 
     private void leave(int gameID, String auth) throws IOException {
@@ -81,7 +86,8 @@ public class WebSocketHandler {
                     var message = String.format("%s has left the game", authData.username());
                     var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
                     connections.broadcast(gameID, notification, auth);
-                } else if (gameBoard.blackUsername() != null && gameService.getGame(gameID).blackUsername().equals(authData.username())) {
+                } else if (gameBoard.blackUsername() != null &&
+                        gameService.getGame(gameID).blackUsername().equals(authData.username())) {
                     String playerColor = "BLACK";
                     gameService.leaveGame(playerColor, gameID);
                     var message = String.format("%s has left the game", authData.username());
@@ -101,22 +107,27 @@ public class WebSocketHandler {
     }
 
     private void resign(int gameID, String auth) throws Exception {
-        if (assertAuth(gameID, auth, true) && assertGameID(gameID, auth) && assertGameplay(gameID, auth)) {
+        if (assertAuth(gameID, auth, true) && assertGameID(gameID, auth) &&
+                assertGameplay(gameID, auth)) {
             try {
                 AuthData authData = userService.getAuth(auth);
                 GameData gameBoard = gameService.getGame(gameID);
                 if (gameBoard.whiteUsername().equals(authData.username())){
                     gameService.resignGame(gameID);
-                    var message = String.format("%s has resigned game and game %s is over", authData.username(), gameID);
-                    var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                    var message = String.format("%s has resigned game and game %s is over",
+                            authData.username(), gameID);
+                    var notification = new NotificationMessage(
+                            ServerMessage.ServerMessageType.NOTIFICATION, message);
                     connections.generalBroadcast(gameID, notification);
                 } else if (gameBoard.blackUsername().equals(authData.username())){
                     gameService.resignGame(gameID);
-                    var message = String.format("%s has resigned game and game %s is over", authData.username(), gameID);
+                    var message = String.format("%s has resigned game and game %s is over",
+                            authData.username(), gameID);
                     var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
                     connections.generalBroadcast(gameID, notification);
                 } else {
-                    var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, String.format("%s is not a player in this game", authData.username()));
+                    var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR,
+                            String.format("%s is not a player in this game", authData.username()));
                     connections.localBroadcast(gameID, error, auth);
                 }
             } catch (Exception ex) {
@@ -127,7 +138,8 @@ public class WebSocketHandler {
     }
 
     private void makeMove(int gameID, String auth, ChessMove move) throws Exception {
-        if (assertAuth(gameID, auth, true) && assertGameID(gameID, auth) && assertChessMove(gameID,auth,move) && assertGameplay(gameID, auth)) {
+        if (assertAuth(gameID, auth, true) && assertGameID(gameID, auth) &&
+                assertChessMove(gameID,auth,move) && assertGameplay(gameID, auth)) {
             try {
                 GameData gameBoard = gameService.getGame(gameID);
                 try {
@@ -147,10 +159,12 @@ public class WebSocketHandler {
                     if (gameBoard.game().isInCheckmate(color)) {
                         gameBoard.game().resignGame();
                         gameService.updateGame(gameBoard.game(), gameID);
-                        var check = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, String.format("%s is in checkmate, Game Over!", color.toString()));
+                        var check = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION,
+                                String.format("%s is in checkmate, Game Over!", color.toString()));
                         connections.generalBroadcast(gameID, check);
                     } else {
-                        var check = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, String.format("%s is in check", color.toString()));
+                        var check = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION,
+                                String.format("%s is in check", color.toString()));
                         connections.generalBroadcast(gameID, check);
                     }
                 }
@@ -171,7 +185,7 @@ public class WebSocketHandler {
         try {
             AuthData authData = userService.getAuth(auth);
             if (authData == null){
-                var message = "user is not authorized";
+                var message = "Error: user is not authorized";
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
                 connections.localBroadcast(gameID, notification, auth);
                 connections.remove(gameID, auth);
@@ -183,7 +197,7 @@ public class WebSocketHandler {
                         return true;
                     }
                 }
-                var message = "player is not authorized";
+                var message = "Error: player is not authorized";
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
                 connections.localBroadcast(gameID, notification, auth);
                 return false;
@@ -200,7 +214,7 @@ public class WebSocketHandler {
     private boolean assertGameID (int gameID, String auth) throws IOException {
         try {
             if (gameService.getGame(gameID) == null) {
-                var message = String.format("game %s not found", gameID);
+                var message = String.format("Error: game %s not found", gameID);
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
                 connections.localBroadcast(gameID, notification, auth);
                 return false;
@@ -219,13 +233,13 @@ public class WebSocketHandler {
             GameData game = gameService.getGame(gameID);
             AuthData authData = userService.getAuth(auth);
             if (game == null) {
-                var message = String.format("game %s not found", gameID);
+                var message = String.format("Error : game %s not found", gameID);
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
                 connections.localBroadcast(gameID, notification, auth);
                 return false;
             }
             if (game.game().getGameOver()){
-                var message = String.format("game %s is over", gameID);
+                var message = String.format("Error: game %s is over", gameID);
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
                 connections.localBroadcast(gameID, notification, auth);
                 return false;
@@ -235,11 +249,13 @@ public class WebSocketHandler {
             ChessPiece piece = chessGame.getBoard().getPiece(move.getStartPosition());
             ChessGame.TeamColor teamColor = piece.getTeamColor();
             if (teamColor == ChessGame.TeamColor.BLACK && !game.blackUsername().equals(authData.username())){
-                var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, "That is not your piece to move");
+                var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR,
+                        "Error: That is not your piece to move");
                 connections.localBroadcast(gameID, notification, auth);
                 return false;
             } else if (teamColor == ChessGame.TeamColor.WHITE && !game.whiteUsername().equals(authData.username())){
-                var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, "That is not your piece to move");
+                var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR,
+                        "Error: That is not your piece to move");
                 connections.localBroadcast(gameID, notification, auth);
                 return false;
             }
@@ -250,7 +266,8 @@ public class WebSocketHandler {
                 return false;
             }
             if(chessGame.getTeamTurn() != piece.getTeamColor()){
-                var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, "It is not your turn");
+                var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR,
+                        "Error: It is not your turn");
                 connections.localBroadcast(gameID, notification, auth);
                 return false;
             }
@@ -262,7 +279,8 @@ public class WebSocketHandler {
             var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, ex.getMessage());
             connections.localBroadcast(gameID, notification, auth);
         }
-        var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, "Invalid move");
+        var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR,
+                "Error: Invalid move");
         connections.localBroadcast(gameID, notification, auth);
         return false;
     }
@@ -270,7 +288,7 @@ public class WebSocketHandler {
     private boolean assertGameplay(int gameID, String auth) throws Exception {
         ChessGame game = gameService.getGame(gameID).game();
         if (game.getGameOver()){
-            var message = String.format("game %s is no longer playable", gameID);
+            var message = String.format("Error: game %s is no longer playable", gameID);
             var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, message);
             connections.localBroadcast(gameID, notification, auth);
             return false;

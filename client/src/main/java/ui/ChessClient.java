@@ -156,16 +156,16 @@ public class ChessClient {
                 join = new JoinGameRequest(Integer.parseInt(params[0]), params[1].toUpperCase());
                 if (params[1].equalsIgnoreCase("BLACK")) {
                     myTeamColor = ChessGame.TeamColor.BLACK;
+                } else {
+                    myTeamColor = ChessGame.TeamColor.WHITE;
                 }
-                myTeamColor = ChessGame.TeamColor.WHITE;
             } catch (NumberFormatException e) {
                 return "Please select a number from the list of games.";
             }
             server.joinGame(authData.authToken(), join);
             ws = new WebsocketFacade(serverUrl,notificationHandler, this);
             ws.joinGame(join, authData);
-            ChessBoard.main(chessGame.getBoard(), null);
-            chessBoard = chessGame.getBoard();
+            ChessBoard.main(chessBoard, null);
             state = State.GAMEPLAY;
             return String.format("You successfully joined and are playing game %s", params[0]);
         }
@@ -204,7 +204,10 @@ public class ChessClient {
             if (Integer.parseInt(params[0]) >= list.getGames().size()){
                 throw new ResponseException(400, "Please input a gameID from the list of games.");
             }
-            ChessBoard.main(null,null);
+            JoinGameRequest join = new JoinGameRequest(Integer.parseInt(params[0]), null);
+            ws.joinGame(join, authData);
+            ChessBoard.main(chessBoard, null);
+            state = State.GAMEPLAY;
             return String.format("You are successfully observing the game %s", params[0]);
         }
         throw new ResponseException(400, "Expected: <gameID>");
