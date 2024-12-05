@@ -109,7 +109,7 @@ public class ChessClient {
                 throw new ResponseException(400, "Error: Please reply with yes or no");
             }
         } else {
-            throw new ResponseException(400,"You are not trying to resign");
+            throw new ResponseException(400,"Error: You are not trying to resign");
         }
     }
 
