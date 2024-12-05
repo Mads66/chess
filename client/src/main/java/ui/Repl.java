@@ -49,7 +49,8 @@ public class Repl implements NotificationHandler {
 
     @Override
     public void notify(Notification notification) {
-        System.out.println(notification.getMessage());
+        String sanitizedMessage = notification.getMessage().replace("\"", "");
+        System.out.println(sanitizedMessage);
         printPrompt();
     }
 }

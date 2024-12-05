@@ -1,9 +1,6 @@
 package server.websocket;
 
-import chess.ChessGame;
-import chess.ChessMove;
-import chess.ChessPiece;
-import chess.InvalidMoveException;
+import chess.*;
 import com.google.gson.Gson;
 import model.AuthData;
 import model.GameData;
@@ -13,6 +10,7 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import service.GameService;
 import service.UserService;
+import websocket.commands.GameCommand;
 import websocket.commands.MoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.*;
@@ -43,12 +41,11 @@ public class WebSocketHandler {
                 MoveCommand moveCommand = new Gson().fromJson(message, MoveCommand.class);
                 makeMove(moveCommand.getGameID(), moveCommand.getAuthToken(), session, moveCommand.getMove());
             }
+            case LOAD_GAME -> {
+                GameCommand gameCommand = new Gson().fromJson(message, GameCommand.class);
+                loadGame(gameCommand.getGameID(), gameCommand.getAuthToken(), session, gameCommand.getHighlight());
+            }
         }
-    }
-
-    @OnWebSocketError
-    public void onError(Session session, Throwable error) {
-        error.printStackTrace();
     }
 
     private void connect(int gameID, Session session, String auth) throws Exception {
@@ -133,7 +130,7 @@ public class WebSocketHandler {
                     connections.generalBroadcast(gameID, notification);
                 } else {
                     var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR,
-                            String.format("%s is not a player in this game", authData.username()));
+                            String.format("Error: %s is not a player in this game", authData.username()));
                     connections.localBroadcast(gameID, error, session);
                 }
             } catch (Exception ex) {
@@ -184,6 +181,14 @@ public class WebSocketHandler {
                 var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
                 connections.localBroadcast(gameID, notification, session);
             }
+        }
+    }
+
+    private void loadGame(int gameID, String auth, Session session, List<ChessPosition> highlight) throws Exception {
+        if (assertAuth(gameID, auth, session,true) && assertGameID(gameID, auth, session)){
+            ChessGame game = gameService.getGame(gameID).game();
+            GameMessage message = new GameMessage(ServerMessage.ServerMessageType.GAME, game, highlight);
+            connections.localBroadcast(gameID,message,session);
         }
     }
 

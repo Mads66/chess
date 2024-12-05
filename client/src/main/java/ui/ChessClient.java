@@ -70,7 +70,7 @@ public class ChessClient {
             for (ChessMove move: moves) {
                 highlight.add(move.getEndPosition());
             }
-            ChessBoard.main(chessBoard,highlight);
+            ws.getGame(myGameData.gameID(), authData,highlight);
             return String.format("Possible moves for piece at (%s, %n)", params[0], params[1]);
         }
         throw new ResponseException(400, "Please input <row> <col> of the piece you would " +
@@ -88,10 +88,10 @@ public class ChessClient {
         assertGamePlay();
         assertTeamTurn(myTeamColor);
         if (params.length == 4){
-            int startRow = rows.indexOf(params[0]);
-            int startCol = Integer.parseInt(params[1]);
-            int endRow = rows.indexOf(params[2]);
-            int endCol = Integer.parseInt(params[3]);
+            int startCol = rows.indexOf(params[1]);
+            int startRow = Integer.parseInt(params[0]);
+            int endCol = rows.indexOf(params[3]);
+            int endRow = Integer.parseInt(params[2]);
             ChessPosition piece = new ChessPosition(startRow, startCol);
             ChessPosition newPosition = new ChessPosition(endRow, endCol);
             ChessMove move = new ChessMove(piece, newPosition, null);
@@ -107,16 +107,19 @@ public class ChessClient {
             ChessPosition newPosition = new ChessPosition(endRow, endCol);
             ChessMove move = new ChessMove(piece, newPosition, promotion);
             ws.makeMove(myGameData.gameID(), authData, move, myTeamColor);
+        } else {
+            throw new ResponseException(400, "Please input <start row> <start col> <new row> <new col> " +
+                    "<opt promotion piece> for the move you want to make and " +
+                    "only input a promotion piece for pawn promotion");
         }
-        throw new ResponseException(400, "Please input <start row> <start col> <new row> <new col> " +
-                "<opt promotion piece> for the move you want to make and " +
-                "only input a promotion piece for pawn promotion");
+        return "You have successfully made this move";
     }
 
     private String leaveGame(String... params) throws ResponseException {
         assertGamePlay();
         int gameID = myGameData.gameID();
         ws.leaveGame(gameID, authData);
+        state = State.LOGGEDIN;
         return String.format("You have successfully left game %s", gameID);
     }
 
@@ -164,8 +167,13 @@ public class ChessClient {
             }
             server.joinGame(authData.authToken(), join);
             ws = new WebsocketFacade(serverUrl,notificationHandler, this);
-            ws.joinGame(join, authData);
-            ChessBoard.main(chessBoard, null);
+            ws.joinGame(join, authData).thenRun(() -> {
+                try {
+                    ws.getGame(myGameData.gameID(), authData, null);
+                } catch (ResponseException e) {
+                    throw new RuntimeException(e);
+                }
+            });
             state = State.GAMEPLAY;
             return String.format("You successfully joined and are playing game %s", params[0]);
         }
@@ -174,7 +182,7 @@ public class ChessClient {
 
     public String redrawBoard(String... params) throws ResponseException {
         assertGamePlay();
-        ChessBoard.main(chessBoard, null);
+        ws.getGame(myGameData.gameID(), authData, null);
         return "";
     }
 
@@ -206,7 +214,7 @@ public class ChessClient {
             }
             JoinGameRequest join = new JoinGameRequest(Integer.parseInt(params[0]), null);
             ws.joinGame(join, authData);
-            ChessBoard.main(chessBoard, null);
+            ws.getGame(myGameData.gameID(), authData, null);
             state = State.GAMEPLAY;
             return String.format("You are successfully observing the game %s", params[0]);
         }

@@ -2,12 +2,15 @@ package ui.websocket;
 
 import chess.ChessGame;
 import chess.ChessMove;
+import chess.ChessPosition;
 import com.google.gson.Gson;
 import exception.ResponseException;
 import model.AuthData;
 import model.GameData;
 import model.JoinGameRequest;
+import ui.ChessBoard;
 import ui.ChessClient;
+import websocket.commands.GameCommand;
 import websocket.commands.MoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.*;
@@ -16,12 +19,17 @@ import javax.websocket.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class WebsocketFacade extends Endpoint {
 
     Session session;
     NotificationHandler notificationHandler;
     ChessClient chessClient;
+    private final Map<UserGameCommand.CommandType, CompletableFuture<String>> pendingResponses = new ConcurrentHashMap<>();
 
 
     public WebsocketFacade(String url, NotificationHandler notificationHandler, ChessClient chessClient) throws ResponseException {
@@ -42,6 +50,12 @@ public class WebsocketFacade extends Endpoint {
                         // Parse the common fields to determine message type
                         ServerMessage baseMessage = new Gson().fromJson(message, ServerMessage.class);
 
+                        CompletableFuture<String> future = pendingResponses.remove(baseMessage.getServerMessageType());
+                        if (future != null) {
+                            future.complete(message);
+                            return;
+                        }
+
                         switch (baseMessage.getServerMessageType()) {
                             case NOTIFICATION -> {
                                 NotificationMessage notification = new Gson().fromJson(message, NotificationMessage.class);
@@ -52,11 +66,16 @@ public class WebsocketFacade extends Endpoint {
                                 LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
                                 GameData gameData = loadGameMessage.getGame();
                                 chessClient.updateGameData(gameData);
-                                notificationHandler.notify(new Notification(loadGameMessage.getServerMessageType(), "LOAD BOARD"));
+                                notificationHandler.notify(new Notification(loadGameMessage.getServerMessageType(), "Please reload your board"));
                             }
                             case ERROR -> {
                                 ErrorMessage errorMessage = new Gson().fromJson(message, ErrorMessage.class);
                                 notificationHandler.notify(new Notification(errorMessage.getServerMessageType(), errorMessage.getError()));
+                            }
+                            case GAME -> {
+                                GameMessage GameMessage = new Gson().fromJson(message, GameMessage.class);
+                                ChessBoard.main(GameMessage.getGame().getBoard(), GameMessage.getHighlight());
+                                notificationHandler.notify(new Notification(GameMessage.getServerMessageType(), ""));
                             }
                             default -> {
                                 System.err.println("Unknown message type received: " + baseMessage.getServerMessageType());
@@ -77,13 +96,31 @@ public class WebsocketFacade extends Endpoint {
     public void onOpen(Session session, EndpointConfig endpointConfig) {
     }
 
-    public void joinGame(JoinGameRequest joinGameRequest, AuthData auth) throws ResponseException {
+    public CompletableFuture<String> sendCommandAndWait(UserGameCommand command) {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        pendingResponses.put(command.getCommandType(), future);
         try {
-            var action = new UserGameCommand(UserGameCommand.CommandType.CONNECT, auth.authToken(), joinGameRequest.gameID());
+            this.session.getBasicRemote().sendText(new Gson().toJson(command));
+        } catch (IOException e) {
+            future.completeExceptionally(e);
+        }
+        return future;
+    }
+
+    public void getGame(int gameID, AuthData authData, List<ChessPosition> highlight) throws ResponseException {
+        try {
+            var action = new GameCommand(UserGameCommand.CommandType.LOAD_GAME, authData.authToken(), gameID, highlight);
             this.session.getBasicRemote().sendText(new Gson().toJson(action));
         } catch (IOException ex) {
             throw new ResponseException(500, ex.getMessage());
         }
+    }
+
+    public CompletableFuture<Void> joinGame(JoinGameRequest joinGameRequest, AuthData auth) throws ResponseException {
+            var action = new UserGameCommand(UserGameCommand.CommandType.CONNECT, auth.authToken(), joinGameRequest.gameID());
+            return sendCommandAndWait(action).thenAccept(response -> {
+                System.out.println("JoinGame response received: " + response);
+            });
     }
 
     public void resignGame(int gameID, AuthData auth) throws ResponseException {
