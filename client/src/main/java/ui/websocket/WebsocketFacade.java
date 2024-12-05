@@ -46,56 +46,7 @@ public class WebsocketFacade extends Endpoint {
             this.session.addMessageHandler(new MessageHandler.Whole<String>() {
                 @Override
                 public void onMessage(String message) {
-                    try {
-                        // Parse the common fields to determine message type
-                        ServerMessage baseMessage = new Gson().fromJson(message, ServerMessage.class);
-
-                        CompletableFuture<String> future = pendingResponses.remove(baseMessage.getServerMessageType());
-                        if (future != null) {
-                            future.complete(message);
-                            return;
-                        }
-
-                        switch (baseMessage.getServerMessageType()) {
-                            case NOTIFICATION -> {
-                                NotificationMessage notification = new Gson().fromJson(message, NotificationMessage.class);
-
-                                notificationHandler.notify(new Notification(notification.getServerMessageType(), notification.getMessage()));
-                            }
-                            case LOAD_GAME -> {
-                                LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
-                                GameData gameData = loadGameMessage.getGame();
-                                System.out.println("\n");
-                                if (chessClient.getMyTeamColor() == ChessGame.TeamColor.WHITE) {
-                                    ChessBoard.main(gameData.game().getBoard(), null, true);
-                                } else{
-                                    ChessBoard.main(gameData.game().getBoard(), null, false);
-                                }
-                                chessClient.updateGameData(gameData);
-                                notificationHandler.notify(new Notification(loadGameMessage.getServerMessageType(), "New board"));
-                            }
-                            case ERROR -> {
-                                ErrorMessage errorMessage = new Gson().fromJson(message, ErrorMessage.class);
-                                notificationHandler.notify(new Notification(errorMessage.getServerMessageType(), errorMessage.getError()));
-                            }
-                            case GAME -> {
-                                GameMessage GameMessage = new Gson().fromJson(message, GameMessage.class);
-                                System.out.println("\n");
-                                if (chessClient.getMyTeamColor() == ChessGame.TeamColor.WHITE) {
-                                    ChessBoard.main(GameMessage.getGame().getBoard(), GameMessage.getHighlight(), true);
-                                } else{
-                                    ChessBoard.main(GameMessage.getGame().getBoard(), GameMessage.getHighlight(), false);
-                                }
-                                notificationHandler.notify(new Notification(GameMessage.getServerMessageType(), ""));
-                            }
-                            default -> {
-                                System.err.println("Unknown message type received: " + baseMessage.getServerMessageType());
-                            }
-                        }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        System.err.println("Failed to process incoming message: " + message);
-                    }
+                    extracted(message, notificationHandler, chessClient);
                 }
             });
         } catch (DeploymentException | IOException | URISyntaxException ex) {
@@ -103,19 +54,61 @@ public class WebsocketFacade extends Endpoint {
         }
     }
 
-    @Override
-    public void onOpen(Session session, EndpointConfig endpointConfig) {
+    private void extracted(String message, NotificationHandler notificationHandler, ChessClient chessClient) {
+        try {
+            // Parse the common fields to determine message type
+            ServerMessage baseMessage = new Gson().fromJson(message, ServerMessage.class);
+
+            CompletableFuture<String> future = pendingResponses.remove(baseMessage.getServerMessageType());
+            if (future != null) {
+                future.complete(message);
+                return;
+            }
+
+            switch (baseMessage.getServerMessageType()) {
+                case NOTIFICATION -> {
+                    NotificationMessage notification = new Gson().fromJson(message, NotificationMessage.class);
+
+                    notificationHandler.notify(new Notification(notification.getServerMessageType(), notification.getMessage()));
+                }
+                case LOAD_GAME -> {
+                    LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
+                    GameData gameData = loadGameMessage.getGame();
+                    System.out.println("\n");
+                    if (chessClient.getMyTeamColor() == ChessGame.TeamColor.WHITE) {
+                        ChessBoard.main(gameData.game().getBoard(), null, true);
+                    } else{
+                        ChessBoard.main(gameData.game().getBoard(), null, false);
+                    }
+                    chessClient.updateGameData(gameData);
+                    notificationHandler.notify(new Notification(loadGameMessage.getServerMessageType(), "New board"));
+                }
+                case ERROR -> {
+                    ErrorMessage errorMessage = new Gson().fromJson(message, ErrorMessage.class);
+                    notificationHandler.notify(new Notification(errorMessage.getServerMessageType(), errorMessage.getError()));
+                }
+                case GAME -> {
+                    GameMessage gameMessage = new Gson().fromJson(message, GameMessage.class);
+                    System.out.println("\n");
+                    if (chessClient.getMyTeamColor() == ChessGame.TeamColor.WHITE) {
+                        ChessBoard.main(gameMessage.getGame().getBoard(), gameMessage.getHighlight(), true);
+                    } else{
+                        ChessBoard.main(gameMessage.getGame().getBoard(), gameMessage.getHighlight(), false);
+                    }
+                    notificationHandler.notify(new Notification(gameMessage.getServerMessageType(), ""));
+                }
+                default -> {
+                    System.err.println("Unknown message type received: " + baseMessage.getServerMessageType());
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            System.err.println("Failed to process incoming message: " + message);
+        }
     }
 
-    public CompletableFuture<String> sendCommandAndWait(UserGameCommand command) {
-        CompletableFuture<String> future = new CompletableFuture<>();
-        pendingResponses.put(command.getCommandType(), future);
-        try {
-            this.session.getBasicRemote().sendText(new Gson().toJson(command));
-        } catch (IOException e) {
-            future.completeExceptionally(e);
-        }
-        return future;
+    @Override
+    public void onOpen(Session session, EndpointConfig endpointConfig) {
     }
 
     public void getGame(int gameID, AuthData authData, List<ChessPosition> highlight) throws ResponseException {
