@@ -23,6 +23,7 @@ public class ChessClient {
     private final List<String> rows;
     private GameData myGameData;
     private ChessGame.TeamColor myTeamColor;
+    private boolean resigning = false;
 
     public ChessClient(String serverUrl, NotificationHandler notificationHandler) {
         server = new ServerFacade(serverUrl);
@@ -30,6 +31,7 @@ public class ChessClient {
         this.authData = null;
         this.notificationHandler = notificationHandler;
         this.rows = Arrays.asList("empty","a", "b", "c", "d", "e", "f", "g", "h");
+
     }
 
     public String eval(String input) {
@@ -51,9 +53,11 @@ public class ChessClient {
                 case "resign" -> resignGame(params);
                 case "highlight" -> highlightMoves(params);
                 case "quit" -> "quit";
+                case "yes" -> handleResignConfirmation("yes");
+                case "no" -> handleResignConfirmation("no");
                 default -> help();
             };
-        } catch (ResponseException e){
+        } catch (ResponseException e) {
             return e.getMessage();
         }
     }
@@ -88,13 +92,30 @@ public class ChessClient {
 
     private String resignGame(String... params) throws ResponseException {
         assertGamePlay();
-        int gameID = myGameData.gameID();
-        ws.resignGame(gameID, authData);
-        return String.format("You have successfully resigned from game %s", gameID);
+        resigning = true;
+        return "Are you sure you want to resign? Reply with 'yes' to confirm or 'no' to cancel.";
+    }
+
+    private String handleResignConfirmation(String... params) throws ResponseException {
+        if (resigning) {
+            if (params[0].equals("yes")) {
+                ws.resignGame(myGameData.gameID(), authData);
+                resigning = false;
+                return "You have resigned from the game.";
+            } else if (params[0].equals("no")) {
+                resigning = false;
+                return "Resignation has been canceled.";
+            } else {
+                throw new ResponseException(400, "Error: Please reply with yes or no");
+            }
+        } else {
+            throw new ResponseException(400,"You are not trying to resign");
+        }
     }
 
     private String movePiece(String... params) throws ResponseException {
         assertGamePlay();
+        assertResigning();
         assertTeamTurn(myTeamColor);
         if (params.length == 4){
             try {
@@ -107,11 +128,10 @@ public class ChessClient {
                 ChessMove move = new ChessMove(piece, newPosition, null);
                 ws.makeMove(myGameData.gameID(), authData, move, myTeamColor);
             } catch (NumberFormatException e) {
-                throw new ResponseException(400, "Please input <start row> <start col> <new row> <new col> " +
+                throw new ResponseException(400, "Error: Please input <start row> <start col> <new row> <new col> " +
                         "<opt promotion piece> for the move you want to make");
             }
-        }
-        if (params.length == 5){
+        } else if (params.length == 5){
             try {
                 int startRow = rows.indexOf(params[0]);
                 int startCol = Integer.parseInt(params[1]);
@@ -123,19 +143,23 @@ public class ChessClient {
                 ChessMove move = new ChessMove(piece, newPosition, promotion);
                 ws.makeMove(myGameData.gameID(), authData, move, myTeamColor);
             } catch (NumberFormatException e) {
-                throw new ResponseException(400, "Please input <start row> <start col> <new row> <new col> " +
+                throw new ResponseException(400, "Error: Please input <start row> <start col> <new row> <new col> " +
                         "<opt promotion piece> for the move you want to make");
             }
+        } else {
+            throw new ResponseException(400, "Error: Please input <start row> <start col> <new row> <new col> " +
+                    "<opt promotion piece> for the move you want to make");
         }
         return "";
     }
 
     private String leaveGame(String... params) throws ResponseException {
         assertGamePlay();
+        assertResigning();
         int gameID = myGameData.gameID();
         ws.leaveGame(gameID, authData);
         state = State.LOGGEDIN;
-        return String.format("You have successfully left game %s", gameID);
+        return "";
     }
 
     public String register(String... params) throws ResponseException {
@@ -168,6 +192,7 @@ public class ChessClient {
 
     public String joinGame(String... params) throws ResponseException {
         assertSignedIn();
+        assertResigning();
         if (params.length == 2) {
             JoinGameRequest join;
             try {
@@ -191,6 +216,7 @@ public class ChessClient {
 
     public String redrawBoard(String... params) throws ResponseException {
         assertGamePlay();
+        assertResigning();
         ws.getGame(myGameData.gameID(), authData, null);
         return "";
     }
@@ -218,7 +244,7 @@ public class ChessClient {
                 throw new ResponseException(400, "Please input a gameID from the list of games.");
             }
             var list = server.listGames(authData.authToken());
-            if (Integer.parseInt(params[0]) >= list.getGames().size()){
+            if (Integer.parseInt(params[0]) > list.getGames().size()){
                 throw new ResponseException(400, "Please input a gameID from the list of games.");
             }
             JoinGameRequest join = new JoinGameRequest(Integer.parseInt(params[0]), null);
@@ -306,7 +332,9 @@ public class ChessClient {
         return myTeamColor;
     }
 
-    public State getState() {
-        return state;
+    public void assertResigning() throws ResponseException {
+        if (resigning){
+            throw new ResponseException(400, "Please reply with yes or no");
+        }
     }
 }
