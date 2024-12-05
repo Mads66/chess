@@ -127,18 +127,20 @@ public class WebsocketFacade extends Endpoint {
         }
     }
 
-    public CompletableFuture<Void> joinGame(JoinGameRequest joinGameRequest, AuthData auth) throws ResponseException {
+    public void joinGame(JoinGameRequest joinGameRequest, AuthData auth) throws ResponseException {
+        try {
             var action = new UserGameCommand(UserGameCommand.CommandType.CONNECT, auth.authToken(), joinGameRequest.gameID());
-            return sendCommandAndWait(action).thenAccept(response -> {
-                System.out.println("JoinGame response received: " + response);
-            });
+            this.session.getBasicRemote().sendText(new Gson().toJson(action));
+        } catch (IOException e) {
+            throw new ResponseException(500, e.getMessage());
+        }
+
     }
 
     public void resignGame(int gameID, AuthData auth) throws ResponseException {
         try {
             var action = new UserGameCommand(UserGameCommand.CommandType.RESIGN, auth.authToken(), gameID);
             this.session.getBasicRemote().sendText(new Gson().toJson(action));
-            this.session.close();
         } catch (IOException ex) {
             throw new ResponseException(500, ex.getMessage());
         }

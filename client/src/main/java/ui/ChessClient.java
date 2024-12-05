@@ -19,9 +19,8 @@ public class ChessClient {
     private final String serverUrl;
     private State state = State.LOGGEDOUT;
     private AuthData authData;
-    private chess.ChessBoard chessBoard;
     private ChessGame chessGame;
-    private List<String> rows;
+    private final List<String> rows;
     private GameData myGameData;
     private ChessGame.TeamColor myTeamColor;
 
@@ -30,7 +29,7 @@ public class ChessClient {
         this.serverUrl = serverUrl;
         this.authData = null;
         this.notificationHandler = notificationHandler;
-        this.rows = Arrays.asList("a", "b", "c", "d", "e", "f", "g");
+        this.rows = Arrays.asList("empty","a", "b", "c", "d", "e", "f", "g", "h");
     }
 
     public String eval(String input) {
@@ -62,19 +61,29 @@ public class ChessClient {
     private String highlightMoves(String... params) throws ResponseException {
         assertGamePlay();
         if (params.length == 2) {
-            int row = rows.indexOf(params[0]);
-            int col = Integer.parseInt(params[1]);
-            ChessPosition piece = new ChessPosition(row, col);
-            Collection<ChessMove> moves = chessGame.validMoves(piece);
-            List<ChessPosition> highlight = new ArrayList<>();
-            for (ChessMove move: moves) {
-                highlight.add(move.getEndPosition());
+            try {
+                int col = rows.indexOf(params[1]);
+                int row = Integer.parseInt(params[0]);
+                ChessPosition piece = new ChessPosition(row, col);
+                if (chessGame.getBoard().getPiece(piece) != null) {
+                    Collection<ChessMove> moves = chessGame.validMoves(piece);
+                    List<ChessPosition> highlight = new ArrayList<>();
+                    for (ChessMove move : moves) {
+                        highlight.add(move.getEndPosition());
+                    }
+                    ws.getGame(myGameData.gameID(), authData, highlight);
+                    return String.format("Possible moves for piece at (%s, %s)", params[0], params[1]);
+                } else {
+                    throw new ResponseException(400, "Error: position does not have a piece");
+                }
+            } catch (NumberFormatException e) {
+                throw new ResponseException(400, "Error: Please input <row> <col> of the piece you would " +
+                        "like to highlight moves for");
             }
-            ws.getGame(myGameData.gameID(), authData,highlight);
-            return String.format("Possible moves for piece at (%s, %n)", params[0], params[1]);
-        }
-        throw new ResponseException(400, "Please input <row> <col> of the piece you would " +
-                "like to highlight moves for");
+        } else {
+                throw new ResponseException(400, "Error: Please input <row> <col> of the piece you would " +
+                        "like to highlight moves for");
+            }
     }
 
     private String resignGame(String... params) throws ResponseException {
@@ -118,7 +127,7 @@ public class ChessClient {
                         "<opt promotion piece> for the move you want to make");
             }
         }
-        return "You have successfully made this move";
+        return "";
     }
 
     private String leaveGame(String... params) throws ResponseException {
@@ -213,8 +222,8 @@ public class ChessClient {
                 throw new ResponseException(400, "Please input a gameID from the list of games.");
             }
             JoinGameRequest join = new JoinGameRequest(Integer.parseInt(params[0]), null);
+            ws = new WebsocketFacade(serverUrl,notificationHandler, this);
             ws.joinGame(join, authData);
-            ws.getGame(myGameData.gameID(), authData, null);
             state = State.GAMEPLAY;
             return String.format("You are successfully observing the game %s", params[0]);
         }
@@ -289,7 +298,6 @@ public class ChessClient {
     }
 
     public void updateGameData(GameData gameData) {
-        chessBoard = gameData.game().getBoard();
         chessGame = gameData.game();
         myGameData = gameData;
     }

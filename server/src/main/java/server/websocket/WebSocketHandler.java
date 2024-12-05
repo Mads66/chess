@@ -122,12 +122,14 @@ public class WebSocketHandler {
                     var notification = new NotificationMessage(
                             ServerMessage.ServerMessageType.NOTIFICATION, message);
                     connections.generalBroadcast(gameID, notification);
+                    connections.add(gameID, session, auth);
                 } else if (gameBoard.blackUsername().equals(authData.username())){
                     gameService.resignGame(gameID);
                     var message = String.format("%s has resigned game and game %s is over",
                             authData.username(), gameID);
                     var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
                     connections.generalBroadcast(gameID, notification);
+                    connections.add(gameID, session, auth);
                 } else {
                     var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR,
                             String.format("Error: %s is not a player in this game", authData.username()));
