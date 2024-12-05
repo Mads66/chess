@@ -65,8 +65,14 @@ public class WebsocketFacade extends Endpoint {
                             case LOAD_GAME -> {
                                 LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
                                 GameData gameData = loadGameMessage.getGame();
+                                System.out.println("\n");
+                                if (chessClient.getMyTeamColor() == ChessGame.TeamColor.WHITE) {
+                                    ChessBoard.main(gameData.game().getBoard(), null, true);
+                                } else{
+                                    ChessBoard.main(gameData.game().getBoard(), null, false);
+                                }
                                 chessClient.updateGameData(gameData);
-                                notificationHandler.notify(new Notification(loadGameMessage.getServerMessageType(), "Please reload your board"));
+                                notificationHandler.notify(new Notification(loadGameMessage.getServerMessageType(), "New board"));
                             }
                             case ERROR -> {
                                 ErrorMessage errorMessage = new Gson().fromJson(message, ErrorMessage.class);
@@ -74,7 +80,12 @@ public class WebsocketFacade extends Endpoint {
                             }
                             case GAME -> {
                                 GameMessage GameMessage = new Gson().fromJson(message, GameMessage.class);
-                                ChessBoard.main(GameMessage.getGame().getBoard(), GameMessage.getHighlight());
+                                System.out.println("\n");
+                                if (chessClient.getMyTeamColor() == ChessGame.TeamColor.WHITE) {
+                                    ChessBoard.main(GameMessage.getGame().getBoard(), GameMessage.getHighlight(), true);
+                                } else{
+                                    ChessBoard.main(GameMessage.getGame().getBoard(), GameMessage.getHighlight(), false);
+                                }
                                 notificationHandler.notify(new Notification(GameMessage.getServerMessageType(), ""));
                             }
                             default -> {

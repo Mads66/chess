@@ -88,29 +88,35 @@ public class ChessClient {
         assertGamePlay();
         assertTeamTurn(myTeamColor);
         if (params.length == 4){
-            int startCol = rows.indexOf(params[1]);
-            int startRow = Integer.parseInt(params[0]);
-            int endCol = rows.indexOf(params[3]);
-            int endRow = Integer.parseInt(params[2]);
-            ChessPosition piece = new ChessPosition(startRow, startCol);
-            ChessPosition newPosition = new ChessPosition(endRow, endCol);
-            ChessMove move = new ChessMove(piece, newPosition, null);
-            ws.makeMove(myGameData.gameID(), authData, move, myTeamColor);
+            try {
+                int startCol = rows.indexOf(params[1]);
+                int startRow = Integer.parseInt(params[0]);
+                int endCol = rows.indexOf(params[3]);
+                int endRow = Integer.parseInt(params[2]);
+                ChessPosition piece = new ChessPosition(startRow, startCol);
+                ChessPosition newPosition = new ChessPosition(endRow, endCol);
+                ChessMove move = new ChessMove(piece, newPosition, null);
+                ws.makeMove(myGameData.gameID(), authData, move, myTeamColor);
+            } catch (NumberFormatException e) {
+                throw new ResponseException(400, "Please input <start row> <start col> <new row> <new col> " +
+                        "<opt promotion piece> for the move you want to make");
+            }
         }
         if (params.length == 5){
-            int startRow = rows.indexOf(params[0]);
-            int startCol = Integer.parseInt(params[1]);
-            int endRow = rows.indexOf(params[2]);
-            int endCol = Integer.parseInt(params[3]);
-            ChessPiece.PieceType promotion = attainPromotionPiece(params[4]);
-            ChessPosition piece = new ChessPosition(startRow, startCol);
-            ChessPosition newPosition = new ChessPosition(endRow, endCol);
-            ChessMove move = new ChessMove(piece, newPosition, promotion);
-            ws.makeMove(myGameData.gameID(), authData, move, myTeamColor);
-        } else {
-            throw new ResponseException(400, "Please input <start row> <start col> <new row> <new col> " +
-                    "<opt promotion piece> for the move you want to make and " +
-                    "only input a promotion piece for pawn promotion");
+            try {
+                int startRow = rows.indexOf(params[0]);
+                int startCol = Integer.parseInt(params[1]);
+                int endRow = rows.indexOf(params[2]);
+                int endCol = Integer.parseInt(params[3]);
+                ChessPiece.PieceType promotion = attainPromotionPiece(params[4]);
+                ChessPosition piece = new ChessPosition(startRow, startCol);
+                ChessPosition newPosition = new ChessPosition(endRow, endCol);
+                ChessMove move = new ChessMove(piece, newPosition, promotion);
+                ws.makeMove(myGameData.gameID(), authData, move, myTeamColor);
+            } catch (NumberFormatException e) {
+                throw new ResponseException(400, "Please input <start row> <start col> <new row> <new col> " +
+                        "<opt promotion piece> for the move you want to make");
+            }
         }
         return "You have successfully made this move";
     }
@@ -167,15 +173,9 @@ public class ChessClient {
             }
             server.joinGame(authData.authToken(), join);
             ws = new WebsocketFacade(serverUrl,notificationHandler, this);
-            ws.joinGame(join, authData).thenRun(() -> {
-                try {
-                    ws.getGame(myGameData.gameID(), authData, null);
-                } catch (ResponseException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            ws.joinGame(join, authData);
             state = State.GAMEPLAY;
-            return String.format("You successfully joined and are playing game %s", params[0]);
+            return String.format("You successfully joined and are playing game %s\n", params[0]);
         }
         throw new ResponseException(400, "Expected: <gameID> <BLACK|WHITE>");
     }
@@ -292,5 +292,13 @@ public class ChessClient {
         chessBoard = gameData.game().getBoard();
         chessGame = gameData.game();
         myGameData = gameData;
+    }
+
+    public ChessGame.TeamColor getMyTeamColor() {
+        return myTeamColor;
+    }
+
+    public State getState() {
+        return state;
     }
 }

@@ -26,14 +26,10 @@ public class ChessBoard {
     public static final String BLACK_PAWN = " P ";
     public static final String EMPTY = " \u2003 ";
 
-    public static void main(chess.ChessBoard myBoard, List<ChessPosition> highlight) {
+    public static void main(chess.ChessBoard myBoard, List<ChessPosition> highlight, boolean isWhitePerspective) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
-        System.out.println("White's perspective:");
-        drawBoard(myBoard, out, true, highlight); // White's perspective
-
-        System.out.println("\nBlack's perspective:");
-        drawBoard(myBoard, out, false, highlight); // Black's perspective
+        drawBoard(myBoard, out, isWhitePerspective, highlight); // White's perspective
     }
 
     private static void drawBoard(chess.ChessBoard myBoard, PrintStream out, boolean isWhitePerspective, List<ChessPosition> highlight) {
