@@ -101,7 +101,7 @@ public class ChessClient {
             if (params[0].equals("yes")) {
                 ws.resignGame(myGameData.gameID(), authData);
                 resigning = false;
-                return "You have resigned from the game.";
+                return "";
             } else if (params[0].equals("no")) {
                 resigning = false;
                 return "Resignation has been canceled.";
