@@ -84,7 +84,9 @@ public class WebSocketHandler {
                 AuthData authData = userService.getAuth(auth);
                 GameData gameBoard = gameService.getGame(gameID);
                 String playerColor = playerColor(gameBoard, authData);
-                gameService.leaveGame(playerColor, gameID);
+                if (!(playerColor.equals("observer"))) {
+                    gameService.leaveGame(playerColor, gameID);
+                }
                 var message = String.format("%s has left the game", authData.username());
                 var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
                 connections.broadcast(gameID, notification, auth);
