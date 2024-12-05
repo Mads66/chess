@@ -83,29 +83,27 @@ public class WebSocketHandler {
             try {
                 AuthData authData = userService.getAuth(auth);
                 GameData gameBoard = gameService.getGame(gameID);
-                if (gameBoard.whiteUsername() != null && gameBoard.whiteUsername().equals(authData.username())) {
-                    String playerColor = "WHITE";
-                    gameService.leaveGame(playerColor, gameID);
-                    var message = String.format("%s has left the game", authData.username());
-                    var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-                    connections.broadcast(gameID, notification, auth);
-                } else if (gameBoard.blackUsername() != null &&
-                        gameService.getGame(gameID).blackUsername().equals(authData.username())) {
-                    String playerColor = "BLACK";
-                    gameService.leaveGame(playerColor, gameID);
-                    var message = String.format("%s has left the game", authData.username());
-                    var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-                    connections.broadcast(gameID, notification, auth);
-                } else {
-                    var message = String.format("%s has left the game", authData.username());
-                    var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-                    connections.broadcast(gameID, notification, auth);
-                }
+                String playerColor = playerColor(gameBoard, authData);
+                gameService.leaveGame(playerColor, gameID);
+                var message = String.format("%s has left the game", authData.username());
+                var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                connections.broadcast(gameID, notification, auth);
                 connections.remove(gameID, auth);
             } catch (Exception ex) {
                 var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
                 connections.localBroadcast(gameID, notification, session);
             }
+        }
+    }
+
+    public String playerColor(GameData gameBoard, AuthData authData) {
+        if (gameBoard.whiteUsername() != null && gameBoard.whiteUsername().equals(authData.username())) {
+            return "WHITE";
+        }
+        if (gameBoard.blackUsername() != null && gameBoard.blackUsername().equals(authData.username())) {
+            return "BLACK";
+        } else {
+            return "observer";
         }
     }
 
@@ -115,21 +113,14 @@ public class WebSocketHandler {
             try {
                 AuthData authData = userService.getAuth(auth);
                 GameData gameBoard = gameService.getGame(gameID);
-                if (gameBoard.whiteUsername().equals(authData.username())){
+                String playerColor = playerColor(gameBoard, authData);
+                if (!(playerColor.equals("observer"))) {
                     gameService.resignGame(gameID);
                     var message = String.format("%s has resigned game and game %s is over",
                             authData.username(), gameID);
                     var notification = new NotificationMessage(
                             ServerMessage.ServerMessageType.NOTIFICATION, message);
                     connections.generalBroadcast(gameID, notification);
-                    connections.add(gameID, session, auth);
-                } else if (gameBoard.blackUsername().equals(authData.username())){
-                    gameService.resignGame(gameID);
-                    var message = String.format("%s has resigned game and game %s is over",
-                            authData.username(), gameID);
-                    var notification = new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-                    connections.generalBroadcast(gameID, notification);
-                    connections.add(gameID, session, auth);
                 } else {
                     var error = new ErrorMessage(ServerMessage.ServerMessageType.ERROR,
                             String.format("Error: %s is not a player in this game", authData.username()));
