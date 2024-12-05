@@ -59,7 +59,7 @@ public class WebSocketHandler {
                 connections.localBroadcast(gameID, gameNote, session);
                 connections.broadcast(gameID, notification, auth);
             } catch (Exception ex) {
-                var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
+                var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: could not connect, please try again");
                 connections.localBroadcast(gameID, notification, session);
             }
         }
@@ -92,7 +92,7 @@ public class WebSocketHandler {
                 connections.broadcast(gameID, notification, auth);
                 connections.remove(gameID, auth);
             } catch (Exception ex) {
-                var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
+                var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: could not leave, please try again");
                 connections.localBroadcast(gameID, notification, session);
             }
         }
@@ -129,7 +129,8 @@ public class WebSocketHandler {
                     connections.localBroadcast(gameID, error, session);
                 }
             } catch (Exception ex) {
-                var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
+                var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: could not resign," +
+                        "please try again");
                 connections.localBroadcast(gameID, notification, session);
             }
         }
@@ -173,7 +174,8 @@ public class WebSocketHandler {
                     connections.generalBroadcast(gameID, check);
                 }
             } catch (Exception ex) {
-                var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
+                var notification = new ErrorMessage(ServerMessage.ServerMessageType.ERROR,
+                        "Error: bad move, please try again");
                 connections.localBroadcast(gameID, notification, session);
             }
         }
@@ -253,7 +255,15 @@ public class WebSocketHandler {
 
             ChessGame chessGame = game.game();
             ChessPiece piece = chessGame.getBoard().getPiece(move.getStartPosition());
-            ChessGame.TeamColor teamColor = piece.getTeamColor();
+            ChessGame.TeamColor teamColor;
+            try {
+                teamColor = piece.getTeamColor();
+            } catch (Exception ex){
+                var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR,
+                        "Error: There is not a piece there");
+                connections.localBroadcast(gameID, notification, session);
+                return false;
+            }
             if (teamColor == ChessGame.TeamColor.BLACK && !game.blackUsername().equals(authData.username())){
                 var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR,
                         "Error: That is not your piece to move");
@@ -282,7 +292,7 @@ public class WebSocketHandler {
                 return true;
             }
         } catch (Exception ex) {
-            var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, ex.getMessage());
+            var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR, "Error: invalid move");
             connections.localBroadcast(gameID, notification, session);
         }
         var notification = new ErrorMessage(ErrorMessage.ServerMessageType.ERROR,
